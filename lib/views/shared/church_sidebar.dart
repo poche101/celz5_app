@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
-// Ensure this path matches your actual file structure
 import 'package:celz5_app/views/login_view.dart';
 
 class ChurchSidebar extends StatefulWidget {
@@ -23,7 +22,7 @@ class _ChurchSidebarState extends State<ChurchSidebar> {
   bool isExpanded = true;
   int? hoveredIndex;
 
-  // --- LOGOUT CONFIRMATION DIALOG ---
+  // --- LOGOUT DIALOG ---
   void _showLogoutConfirmation() {
     showDialog(
       context: context,
@@ -33,8 +32,7 @@ class _ChurchSidebarState extends State<ChurchSidebar> {
           shape:
               RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
           title: const Text("Logout", style: TextStyle(color: Colors.white)),
-          content: const Text(
-              "Are you sure you want to sign out of your account?",
+          content: const Text("Are you sure you want to sign out?",
               style: TextStyle(color: Colors.white70)),
           actions: [
             TextButton(
@@ -51,8 +49,8 @@ class _ChurchSidebarState extends State<ChurchSidebar> {
                     borderRadius: BorderRadius.circular(12)),
               ),
               onPressed: () {
-                Navigator.pop(context); // Close dialog
-                widget.onItemSelected(10); // Trigger Logout in parent
+                Navigator.pop(context);
+                widget.onItemSelected(10); // Pass logout signal to parent
               },
               child: const Text("Logout"),
             ),
@@ -103,6 +101,7 @@ class _ChurchSidebarState extends State<ChurchSidebar> {
     );
   }
 
+  // --- NAV ITEM REDIRECTION FIX ---
   Widget _navItem(IconData icon, String label, int index) {
     bool isActive = widget.selectedIndex == index;
     bool isHovered = hoveredIndex == index;
@@ -113,7 +112,10 @@ class _ChurchSidebarState extends State<ChurchSidebar> {
         onExit: (_) => setState(() => hoveredIndex = null),
         cursor: SystemMouseCursors.click,
         child: GestureDetector(
-          onTap: () => widget.onItemSelected(index),
+          onTap: () {
+            // This tells the HomeView to change the current page
+            widget.onItemSelected(index);
+          },
           child: AnimatedContainer(
             duration: const Duration(milliseconds: 200),
             padding: const EdgeInsets.symmetric(vertical: 12),
@@ -195,6 +197,7 @@ class _ChurchSidebarState extends State<ChurchSidebar> {
     );
   }
 
+  // --- FOOTER WITH LOGIN REDIRECTION ---
   Widget _buildProfileFooter() {
     return Container(
       margin: const EdgeInsets.all(12),
@@ -208,7 +211,8 @@ class _ChurchSidebarState extends State<ChurchSidebar> {
             isExpanded ? MainAxisAlignment.start : MainAxisAlignment.center,
         children: [
           PopupMenuButton<int>(
-            offset: const Offset(0, -115),
+            offset: const Offset(0, -70), // Positions drop-up nicely
+            position: PopupMenuPosition.over,
             color: const Color(0xFF1A2A42),
             elevation: 8,
             shape: RoundedRectangleBorder(
@@ -217,20 +221,22 @@ class _ChurchSidebarState extends State<ChurchSidebar> {
             ),
             onSelected: (value) {
               if (value == 8) {
+                // REDIRECT TO LOGIN VIEW
                 Navigator.push(
                   context,
                   MaterialPageRoute(builder: (context) => const LoginView()),
                 );
               } else if (value == 10) {
-                _showLogoutConfirmation(); // Use the confirmation dialog
+                _showLogoutConfirmation();
               } else {
                 widget.onItemSelected(value);
               }
             },
             itemBuilder: (context) => [
-              if (!widget.isLoggedIn)
+              if (!widget.isLoggedIn) ...[
                 _buildPopupItem(8, LucideIcons.log_in, "Login to Account",
                     Colors.blueAccent),
+              ],
               if (widget.isLoggedIn) ...[
                 _buildPopupItem(
                     9, LucideIcons.user, "View Profile", Colors.white),

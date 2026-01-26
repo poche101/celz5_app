@@ -1,86 +1,177 @@
 import 'package:flutter/material.dart';
-// import 'package:celz5_app/views/shared/navbar.dart'; // No longer needed here
+
+// Shared Components
+import 'package:celz5_app/views/shared/church_sidebar.dart';
 import 'package:celz5_app/views/shared/footer.dart';
 
-class HomeView extends StatelessWidget {
+// Individual Views
+import 'package:celz5_app/views/about_view.dart';
+import 'package:celz5_app/views/testimonies_view.dart';
+import 'package:celz5_app/views/event_view.dart';
+import 'package:celz5_app/views/blog_view.dart';
+import 'package:celz5_app/views/higher_life_view.dart';
+import 'package:celz5_app/views/contacts_view.dart';
+import 'package:celz5_app/views/live_streams_view.dart';
+import 'package:celz5_app/views/profile_view.dart';
+import 'package:celz5_app/views/login_view.dart';
+
+class HomeView extends StatefulWidget {
   const HomeView({super.key});
+
+  @override
+  State<HomeView> createState() => _HomeViewState();
+}
+
+class _HomeViewState extends State<HomeView> {
+  int _selectedIndex = 0;
+  bool _isLoggedIn = true;
+
+  void _onItemSelected(int index) {
+    // Handling specific actions based on index
+    switch (index) {
+      case 8: // LOGIN
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (context) => const LoginView()),
+        ).then((_) => setState(() {})); // Re-sync state on return
+        break;
+
+      case 10: // LOGOUT
+        setState(() {
+          _isLoggedIn = false;
+          _selectedIndex = 0; // Reset to Home
+        });
+        break;
+
+      default: // ALL OTHER PAGES
+        setState(() {
+          _selectedIndex = index;
+        });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      // appBar: const CelzNavbar(), // REMOVED
-      // extendBodyBehindAppBar: true, // REMOVED - not needed without AppBar
-      body: SingleChildScrollView(
-        child: Column(
-          children: [
-            // --- HERO SECTION ---
-            _buildHeroSection(context),
+      backgroundColor: const Color(0xFFF5F7FA), // Light neutral background
+      body: Row(
+        children: [
+          // 1. Sidebar remains static on the left
+          ChurchSidebar(
+            selectedIndex: _selectedIndex,
+            onItemSelected: _onItemSelected,
+            isLoggedIn: _isLoggedIn,
+          ),
 
-            // --- MAIN CONTENT AREA ---
-            Container(
-              padding: const EdgeInsets.symmetric(vertical: 80, horizontal: 20),
-              child: const Column(
-                children: [
-                  Text(
-                    "Welcome to CELZ5",
-                    style: TextStyle(fontSize: 32, fontWeight: FontWeight.bold),
-                  ),
-                  SizedBox(height: 20),
-                  Text(
-                    "Spreading the message of the gospel to the ends of the earth.",
-                  ),
-                ],
-              ),
+          // 2. Main content area changes based on index
+          Expanded(
+            child: IndexedStack(
+              index: _selectedIndex,
+              children: [
+                _buildHomeScreenContent(), // 0
+                const AboutView(), // 1
+                const TestimoniesView(), // 2
+                const EventView(), // 3
+                const BlogView(), // 4
+                const HigherLifeView(), // 5
+                const ContactView(), // 6
+                const LiveStreamsView(), // 7
+                const SizedBox
+                    .shrink(), // 8 (Placeholder, handled by Navigator)
+                const ProfileView(), // 9
+              ],
             ),
-
-            // --- FOOTER ---
-            const CelzFooter(),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
 
-  Widget _buildHeroSection(BuildContext context) {
+  Widget _buildHomeScreenContent() {
+    return SingleChildScrollView(
+      physics: const ClampingScrollPhysics(), // Prevents bouncy gaps on web
+      child: Column(
+        children: [
+          _buildHeroSection(),
+          _buildWelcomeSection(),
+          const CelzFooter(),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildWelcomeSection() {
+    return Container(
+      padding: const EdgeInsets.symmetric(vertical: 80, horizontal: 30),
+      child: Column(
+        children: [
+          const Text(
+            "Welcome to CELZ5",
+            style: TextStyle(
+                fontSize: 36,
+                fontWeight: FontWeight.bold,
+                color: Color(0xFF0A192F)),
+          ),
+          const SizedBox(height: 24),
+          const Text(
+            "Spreading the message of the gospel to the ends of the earth.",
+            textAlign: TextAlign.center,
+            style: TextStyle(fontSize: 18, color: Colors.black54, height: 1.5),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildHeroSection() {
+    final size = MediaQuery.of(context).size;
     return Container(
       width: double.infinity,
-      height: MediaQuery.of(context).size.height * 0.8,
+      height: size.height * 0.75, // Adjust height to be responsive
       decoration: const BoxDecoration(
         image: DecorationImage(
           image: AssetImage('assets/images/hero_bg.jpg'),
           fit: BoxFit.cover,
-          colorFilter: ColorFilter.mode(Colors.black45, BlendMode.darken),
+          colorFilter: ColorFilter.mode(Colors.black54, BlendMode.darken),
         ),
       ),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          const Text(
-            "EXPERIENCE THE EXTRAORDINARY",
-            style: TextStyle(
-              color: Colors.white,
-              fontSize: 48,
-              fontWeight: FontWeight.w900,
-              letterSpacing: 2,
-            ),
-            textAlign: TextAlign.center,
-          ),
-          const SizedBox(height: 20),
-          ElevatedButton(
-            onPressed: () {},
-            style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFF0A192F),
-              padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 20),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(30),
+      child: Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Padding(
+              padding: EdgeInsets.symmetric(horizontal: 20),
+              child: Text(
+                "EXPERIENCE THE EXTRAORDINARY",
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 52,
+                  fontWeight: FontWeight.w900,
+                  letterSpacing: 1.5,
+                ),
+                textAlign: TextAlign.center,
               ),
             ),
-            child: const Text(
-              "JOIN US LIVE",
-              style: TextStyle(color: Colors.white),
+            const SizedBox(height: 40),
+            ElevatedButton(
+              onPressed: () => _onItemSelected(7), // Jump to Live Streams
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFF0A192F),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 45, vertical: 22),
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(4)),
+              ),
+              child: const Text(
+                "JOIN US LIVE",
+                style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold),
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
