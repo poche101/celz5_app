@@ -22,7 +22,31 @@ class _ChurchSidebarState extends State<ChurchSidebar> {
   bool isExpanded = true;
   int? hoveredIndex;
 
-  // --- LOGOUT DIALOG ---
+  // Enhanced Popup Item with professional typography and spacing
+  PopupMenuItem<int> _buildPopupItem(
+      int value, IconData icon, String text, Color color) {
+    return PopupMenuItem(
+      value: value,
+      height: 40,
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 16, color: color.withOpacity(0.7)),
+          const SizedBox(width: 10),
+          Text(
+            text,
+            style: TextStyle(
+              color: color,
+              fontSize: 12,
+              fontWeight: FontWeight.w500,
+              letterSpacing: 0.3,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   void _showLogoutConfirmation() {
     showDialog(
       context: context,
@@ -50,7 +74,7 @@ class _ChurchSidebarState extends State<ChurchSidebar> {
               ),
               onPressed: () {
                 Navigator.pop(context);
-                widget.onItemSelected(10); // Pass logout signal to parent
+                widget.onItemSelected(10);
               },
               child: const Text("Logout"),
             ),
@@ -101,7 +125,6 @@ class _ChurchSidebarState extends State<ChurchSidebar> {
     );
   }
 
-  // --- NAV ITEM REDIRECTION FIX ---
   Widget _navItem(IconData icon, String label, int index) {
     bool isActive = widget.selectedIndex == index;
     bool isHovered = hoveredIndex == index;
@@ -112,10 +135,7 @@ class _ChurchSidebarState extends State<ChurchSidebar> {
         onExit: (_) => setState(() => hoveredIndex = null),
         cursor: SystemMouseCursors.click,
         child: GestureDetector(
-          onTap: () {
-            // This tells the HomeView to change the current page
-            widget.onItemSelected(index);
-          },
+          onTap: () => widget.onItemSelected(index),
           child: AnimatedContainer(
             duration: const Duration(milliseconds: 200),
             padding: const EdgeInsets.symmetric(vertical: 12),
@@ -197,35 +217,32 @@ class _ChurchSidebarState extends State<ChurchSidebar> {
     );
   }
 
-  // --- FOOTER WITH LOGIN REDIRECTION ---
   Widget _buildProfileFooter() {
     return Container(
       margin: const EdgeInsets.all(12),
-      padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 8),
+      padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
       decoration: BoxDecoration(
         color: Colors.white.withOpacity(0.03),
         borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: Colors.white.withOpacity(0.05)),
       ),
       child: Row(
         mainAxisAlignment:
             isExpanded ? MainAxisAlignment.start : MainAxisAlignment.center,
         children: [
           PopupMenuButton<int>(
-            offset: const Offset(0, -70), // Positions drop-up nicely
-            position: PopupMenuPosition.over,
-            color: const Color(0xFF1A2A42),
-            elevation: 8,
+            offset: const Offset(0, -105),
+            color: const Color(0xFF132238),
+            elevation: 10,
+            position: PopupMenuPosition.under,
             shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(15),
+              borderRadius: BorderRadius.circular(12),
               side: BorderSide(color: Colors.white.withOpacity(0.1)),
             ),
             onSelected: (value) {
               if (value == 8) {
-                // REDIRECT TO LOGIN VIEW
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (context) => const LoginView()),
-                );
+                Navigator.push(context,
+                    MaterialPageRoute(builder: (context) => const LoginView()));
               } else if (value == 10) {
                 _showLogoutConfirmation();
               } else {
@@ -233,10 +250,9 @@ class _ChurchSidebarState extends State<ChurchSidebar> {
               }
             },
             itemBuilder: (context) => [
-              if (!widget.isLoggedIn) ...[
+              if (!widget.isLoggedIn)
                 _buildPopupItem(8, LucideIcons.log_in, "Login to Account",
                     Colors.blueAccent),
-              ],
               if (widget.isLoggedIn) ...[
                 _buildPopupItem(
                     9, LucideIcons.user, "View Profile", Colors.white),
@@ -245,16 +261,23 @@ class _ChurchSidebarState extends State<ChurchSidebar> {
                     10, LucideIcons.log_out, "Logout", Colors.redAccent),
               ],
             ],
-            child: CircleAvatar(
-              radius: 18,
-              backgroundColor:
-                  widget.isLoggedIn ? Colors.blueAccent : Colors.white10,
-              child: Icon(
-                widget.isLoggedIn
-                    ? LucideIcons.user
-                    : LucideIcons.circle_user_round,
-                size: 18,
-                color: Colors.white,
+            child: Container(
+              padding: const EdgeInsets.all(2),
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                border: Border.all(color: Colors.white.withOpacity(0.15)),
+              ),
+              child: CircleAvatar(
+                radius: 16,
+                backgroundColor:
+                    widget.isLoggedIn ? Colors.blueAccent : Colors.white12,
+                child: Icon(
+                  widget.isLoggedIn
+                      ? LucideIcons.user
+                      : LucideIcons.circle_user_round,
+                  size: 18,
+                  color: Colors.white,
+                ),
               ),
             ),
           ),
@@ -265,35 +288,26 @@ class _ChurchSidebarState extends State<ChurchSidebar> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Text(widget.isLoggedIn ? "Bro. Kings" : "Guest User",
-                      style: const TextStyle(
-                          color: Colors.white,
-                          fontWeight: FontWeight.bold,
-                          fontSize: 13)),
-                  Text(widget.isLoggedIn ? "Media Team" : "Welcome",
-                      style:
-                          const TextStyle(color: Colors.white38, fontSize: 11)),
+                  Text(
+                    widget.isLoggedIn ? "Bro. Kings" : "Guest User",
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.w600,
+                      fontSize: 13,
+                    ),
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  Text(
+                    widget.isLoggedIn ? "Media Team" : "Welcome",
+                    style: TextStyle(
+                      color: Colors.white.withOpacity(0.4),
+                      fontSize: 11,
+                    ),
+                  ),
                 ],
               ),
             ),
           ]
-        ],
-      ),
-    );
-  }
-
-  PopupMenuItem<int> _buildPopupItem(
-      int value, IconData icon, String text, Color color) {
-    return PopupMenuItem(
-      value: value,
-      height: 45,
-      child: Row(
-        children: [
-          Icon(icon, size: 18, color: color.withOpacity(0.8)),
-          const SizedBox(width: 12),
-          Text(text,
-              style: TextStyle(
-                  color: color, fontSize: 13, fontWeight: FontWeight.w500)),
         ],
       ),
     );
