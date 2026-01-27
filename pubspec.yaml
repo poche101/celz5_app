@@ -4,13 +4,14 @@ publish_to: 'none'
 version: 1.0.0+1
 
 environment:
-  sdk: ^3.4.0 # Or your current version
+  sdk: ^3.4.0
 
 dependencies:
   flutter:
     sdk: flutter
-  google_fonts: ^6.2.1   # This replaces your local Inter font files
+  google_fonts: ^6.2.1
   qr_flutter: ^4.1.0
+  video_player: ^2.8.1
   flutter_lucide: ^1.8.2
   intl: ^0.20.2
   cupertino_icons: ^1.0.8
@@ -24,10 +25,9 @@ dev_dependencies:
 flutter:
   uses-material-design: true
 
+  # Asset folder registration
   assets:
     - assets/images/
     - assets/icons/
-    # NOTICE: No 'assets/fonts/' here. 
-    # If the folder is empty, remove this line entirely.
 
-  # DELETE EVERYTHING FROM 'fonts:' DOWNWARD
+# Fonts section removed - using google_fonts dependency instead.

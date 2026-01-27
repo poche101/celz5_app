@@ -6,120 +6,155 @@ class CelzFooter extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final double screenWidth = MediaQuery.of(context).size.width;
-    final bool isMobile = screenWidth < 800;
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final bool isMobile = constraints.maxWidth < 900;
 
-    return Container(
-      width: double.infinity,
-      color: const Color(0xFF132238),
-      padding: EdgeInsets.symmetric(
-        vertical: 40,
-        horizontal: isMobile ? 20 : 80,
-      ),
-      child: Column(
-        children: [
-          Row(
+        return Container(
+          width: double.infinity,
+          color: const Color(0xFF132238),
+          padding: EdgeInsets.symmetric(
+            vertical: 40,
+            horizontal: isMobile ? 24 : 80,
+          ),
+          child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // --- BRAND & MISSION ---
-              Expanded(
-                flex: 2,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const _AnimatedHeader(title: "CELZ5", isMainLogo: true),
-                    const SizedBox(height: 16),
-                    Text(
-                      "Spreading the message of the Higher Life to the ends of the earth through innovation and grace.",
-                      style: TextStyle(
-                        color: Colors.white.withOpacity(0.6),
-                        fontSize: 13,
-                        height: 1.5,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-
-              if (!isMobile) const Spacer(),
-
-              // --- QUICK LINKS ---
-              if (!isMobile)
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const _AnimatedHeader(title: "CHURCH"),
-                      const SizedBox(height: 20),
-                      ...["About", "Events", "Giving", "Privacy"]
-                          .map((link) => _buildLinkItem(link)),
-                    ],
-                  ),
-                ),
-
-              // --- SOCIAL MEDIA SECTION ---
-              Expanded(
-                flex: isMobile ? 2 : 1,
-                child: Column(
-                  crossAxisAlignment: isMobile
-                      ? CrossAxisAlignment.start
-                      : CrossAxisAlignment.end,
-                  children: [
-                    const _AnimatedHeader(
-                        title: "FOLLOW US", isRightAligned: true),
-                    const SizedBox(height: 20),
-                    Wrap(
-                      spacing: 12,
-                      runSpacing: 10,
-                      children: [
-                        _socialIcon(LucideIcons.facebook),
-                        _socialIcon(LucideIcons.instagram),
-                        _socialIcon(LucideIcons.twitter),
-                        _socialIcon(LucideIcons.youtube),
-                        _socialIcon(LucideIcons.linkedin),
-                      ],
-                    ),
-                  ],
-                ),
-              ),
+              isMobile ? _buildMobileLayout() : _buildDesktopLayout(),
+              const SizedBox(height: 40),
+              const Divider(color: Colors.white10, thickness: 1),
+              const SizedBox(height: 20),
+              _buildBottomBar(isMobile),
             ],
           ),
-          const SizedBox(height: 40),
-          const Divider(color: Colors.white10, thickness: 1),
-          const SizedBox(height: 20),
-          _buildBottomBar(),
-        ],
-      ),
+        );
+      },
     );
   }
 
-  Widget _buildLinkItem(String title) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 10.0),
-      child: MouseRegion(
-        cursor: SystemMouseCursors.click,
-        child: Text(
-          title,
-          style: TextStyle(color: Colors.white.withOpacity(0.5), fontSize: 13),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildBottomBar() {
+  Widget _buildDesktopLayout() {
     return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          "© 2026 CELZ5 CONNECT",
-          style: TextStyle(color: Colors.white.withOpacity(0.3), fontSize: 10),
+        Expanded(flex: 3, child: _brandSection()),
+        const SizedBox(width: 40),
+        Expanded(flex: 2, child: _linksSection()),
+        Expanded(flex: 2, child: _contactSection()),
+        Expanded(flex: 2, child: _socialsSection(false)),
+      ],
+    );
+  }
+
+  Widget _buildMobileLayout() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _brandSection(),
+        const SizedBox(height: 40),
+        _linksSection(),
+        const SizedBox(height: 40),
+        _contactSection(),
+        const SizedBox(height: 40),
+        _socialsSection(true),
+      ],
+    );
+  }
+
+  Widget _brandSection() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Container(
+              width: 50,
+              height: 50,
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Image.asset(
+                'assets/images/logo.png',
+                fit: BoxFit.contain,
+                errorBuilder: (context, error, stackTrace) => Container(
+                  decoration: BoxDecoration(
+                    color: Colors.blueAccent.withOpacity(0.2),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: const Icon(LucideIcons.triangle_alert,
+                      color: Colors.blueAccent, size: 20),
+                ),
+              ),
+            ),
+            const SizedBox(width: 16),
+            const Padding(
+              padding: EdgeInsets.only(top: 4),
+              child: _AnimatedHeader(
+                title: "CHRIST EMBASSY\nLAGOS ZONE 5",
+                isMainLogo: true,
+              ),
+            ),
+          ],
         ),
+        const SizedBox(height: 24),
         Text(
-          "CHRIST EMBASSY • LAGOS ZONE 5",
+          "LoveWorld Incorporated, (a.k.a Christ Embassy) is a global ministry with a vision of taking God’s divine presence to the nations of the world and to demonstrate the character of the Holy Spirit.",
           style: TextStyle(
-              color: Colors.white.withOpacity(0.3),
-              fontSize: 10,
-              letterSpacing: 1),
+            color: Colors.white.withOpacity(0.6),
+            fontSize: 13,
+            height: 1.6,
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _linksSection() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const _AnimatedHeader(title: "CHURCH"),
+        const SizedBox(height: 20),
+        ...["About", "Podcast", "FAQ"].map((link) => _FooterLink(title: link)),
+      ],
+    );
+  }
+
+  Widget _contactSection() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const _AnimatedHeader(title: "CONTACTS"),
+        const SizedBox(height: 20),
+        Text(
+          "Loveworld Arena Lekki,\nAare Bashiru street, Chisco B/S,\nLekki-Epe Express Way",
+          style: TextStyle(
+            color: Colors.white.withOpacity(0.5),
+            fontSize: 13,
+            height: 1.6,
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _socialsSection(bool isLeftAligned) {
+    return Column(
+      crossAxisAlignment:
+          isLeftAligned ? CrossAxisAlignment.start : CrossAxisAlignment.end,
+      children: [
+        _AnimatedHeader(title: "FOLLOW US", isRightAligned: !isLeftAligned),
+        const SizedBox(height: 20),
+        Wrap(
+          spacing: 12,
+          runSpacing: 10,
+          children: [
+            _socialIcon(LucideIcons.facebook),
+            _socialIcon(LucideIcons.instagram),
+            _socialIcon(LucideIcons.twitter),
+            _socialIcon(LucideIcons.youtube),
+          ],
         ),
       ],
     );
@@ -137,9 +172,33 @@ class CelzFooter extends StatelessWidget {
       ),
     );
   }
+
+  Widget _buildBottomBar(bool isMobile) {
+    return Flex(
+      direction: isMobile ? Axis.vertical : Axis.horizontal,
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      crossAxisAlignment: CrossAxisAlignment.center,
+      children: [
+        Text(
+          "© 2026 CELZ5 CONNECT",
+          style: TextStyle(color: Colors.white.withOpacity(0.3), fontSize: 10),
+        ),
+        if (isMobile) const SizedBox(height: 12),
+        Text(
+          "CHRIST EMBASSY • LAGOS ZONE 5",
+          textAlign: isMobile ? TextAlign.center : TextAlign.end,
+          style: TextStyle(
+            color: Colors.white.withOpacity(0.3),
+            fontSize: 10,
+            letterSpacing: 1,
+          ),
+        ),
+      ],
+    );
+  }
 }
 
-/// --- CUSTOM ANIMATED HEADER WIDGET ---
+// --- REFACTORED HEADER WITH TWO-PART UNDERLINE ---
 class _AnimatedHeader extends StatefulWidget {
   final String title;
   final bool isMainLogo;
@@ -160,6 +219,8 @@ class _AnimatedHeaderState extends State<_AnimatedHeader> {
 
   @override
   Widget build(BuildContext context) {
+    final color = widget.isMainLogo ? Colors.white : Colors.blueAccent;
+
     return MouseRegion(
       onEnter: (_) => setState(() => _isHovered = true),
       onExit: (_) => setState(() => _isHovered = false),
@@ -172,27 +233,36 @@ class _AnimatedHeaderState extends State<_AnimatedHeader> {
           Text(
             widget.title,
             style: TextStyle(
-              color: widget.isMainLogo ? Colors.white : Colors.blueAccent,
-              fontSize: widget.isMainLogo ? 24 : 12,
-              fontWeight: FontWeight.w900,
-              letterSpacing: 1.5,
+              color: color,
+              fontSize: widget.isMainLogo ? 16 : 12,
+              height: 1.1,
+              fontWeight: widget.isMainLogo ? FontWeight.w800 : FontWeight.w900,
+              letterSpacing: widget.isMainLogo ? 0.8 : 1.5,
             ),
           ),
-          const SizedBox(height: 6),
-          Stack(
+          const SizedBox(height: 8),
+          // TWO-PART UNDERLINE
+          Row(
+            mainAxisSize: MainAxisSize.min,
             children: [
-              // Part 1: The Long Background Line
-              Container(
-                width: 60,
-                height: 2,
-                color: Colors.white.withOpacity(0.1),
-              ),
-              // Part 2: The Short Animated Accent Line
               AnimatedContainer(
                 duration: const Duration(milliseconds: 300),
-                width: _isHovered ? 60 : 25,
-                height: 2,
-                color: Colors.white,
+                width: _isHovered ? 60 : 35,
+                height: 3,
+                decoration: BoxDecoration(
+                  color: color,
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+              const SizedBox(width: 4),
+              AnimatedContainer(
+                duration: const Duration(milliseconds: 400),
+                width: _isHovered ? 15 : 8,
+                height: 3,
+                decoration: BoxDecoration(
+                  color: color.withOpacity(0.5),
+                  borderRadius: BorderRadius.circular(2),
+                ),
               ),
             ],
           ),
@@ -202,7 +272,42 @@ class _AnimatedHeaderState extends State<_AnimatedHeader> {
   }
 }
 
-/// --- SOCIAL ICON HOVER ANIMATION ---
+class _FooterLink extends StatefulWidget {
+  final String title;
+  const _FooterLink({required this.title});
+
+  @override
+  State<_FooterLink> createState() => _FooterLinkState();
+}
+
+class _FooterLinkState extends State<_FooterLink> {
+  bool _isHovered = false;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 10.0),
+      child: MouseRegion(
+        onEnter: (_) => setState(() => _isHovered = true),
+        onExit: (_) => setState(() => _isHovered = false),
+        cursor: SystemMouseCursors.click,
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 200),
+          padding: EdgeInsets.only(left: _isHovered ? 8 : 0),
+          child: Text(
+            widget.title,
+            style: TextStyle(
+              color: _isHovered ? Colors.white : Colors.white.withOpacity(0.5),
+              fontSize: 13,
+              fontWeight: _isHovered ? FontWeight.w500 : FontWeight.normal,
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
 class _HoverScaleWrapper extends StatefulWidget {
   final Widget child;
   const _HoverScaleWrapper({required this.child});
@@ -217,7 +322,6 @@ class _HoverScaleWrapperState extends State<_HoverScaleWrapper> {
   @override
   Widget build(BuildContext context) {
     return MouseRegion(
-      cursor: SystemMouseCursors.click,
       onEnter: (_) => setState(() => _isHovered = true),
       onExit: (_) => setState(() => _isHovered = false),
       child: AnimatedScale(
