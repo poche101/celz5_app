@@ -44,10 +44,10 @@ class _HomeViewState extends State<HomeView> {
         children: [
           _buildHomeTabContent(), // Index 0 (Now Sticky)
           const AboutView(), // Index 1
-          const TestimoniesView(), // Index 2
+          const TestimonyView(), // Index 2
           const EventView(), // Index 3
           const BlogView(), // Index 4
-          const HigherLifeView(), // Index 5
+          const HigherLifeArchiveApp(), // Index 5
           const ContactView(), // Index 6
           const LiveStreamsView(), // Index 7
           const SizedBox.shrink(), // Index 8

@@ -215,7 +215,8 @@ class _BlogViewState extends State<BlogView> {
               image: NetworkImage(
                   'https://images.unsplash.com/photo-1493612276216-ee3925520721?q=80&w=1000'),
               fit: BoxFit.cover,
-              colorFilter: ColorFilter.mode(Colors.black54, BlendMode.darken))),
+              colorFilter: ColorFilter.mode(
+                  Color.fromARGB(133, 12, 10, 136), BlendMode.darken))),
       child: Padding(
         padding: EdgeInsets.all(isWide ? 60.0 : 30.0),
         child: Column(
@@ -231,9 +232,6 @@ class _BlogViewState extends State<BlogView> {
                     fontWeight: FontWeight.w900,
                     height: 1.1)),
             const SizedBox(height: 12),
-            const Text("By Dr. Elena Vance • January 2026",
-                style: TextStyle(
-                    color: Colors.white70, fontWeight: FontWeight.w600)),
           ],
         ),
       ),
@@ -338,7 +336,7 @@ class _BlogViewState extends State<BlogView> {
             runSpacing: 8,
             children: [
               "Spirituality",
-              "Mental Health",
+              "Health & Healing",
               "Leadership",
               "Technology",
               "Events",

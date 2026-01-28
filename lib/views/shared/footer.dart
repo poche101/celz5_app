@@ -39,7 +39,7 @@ class CelzFooter extends StatelessWidget {
         Expanded(flex: 3, child: _brandSection()),
         const SizedBox(width: 40),
         Expanded(flex: 2, child: _linksSection()),
-        Expanded(flex: 2, child: _contactSection()),
+        Expanded(flex: 3, child: _contactSection()),
         Expanded(flex: 2, child: _socialsSection(false)),
       ],
     );
@@ -71,19 +71,18 @@ class CelzFooter extends StatelessWidget {
             Container(
               width: 50,
               height: 50,
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(10),
-              ),
+              decoration:
+                  BoxDecoration(borderRadius: BorderRadius.circular(10)),
               child: Image.asset(
                 'assets/images/logo.png',
                 fit: BoxFit.contain,
                 errorBuilder: (context, error, stackTrace) => Container(
                   decoration: BoxDecoration(
-                    color: Colors.blueAccent.withOpacity(0.2),
+                    color: Colors.white.withOpacity(0.05),
                     borderRadius: BorderRadius.circular(10),
                   ),
-                  child: const Icon(LucideIcons.triangle_alert,
-                      color: Colors.blueAccent, size: 20),
+                  child: const Icon(LucideIcons.church,
+                      color: Colors.orangeAccent, size: 24),
                 ),
               ),
             ),
@@ -99,7 +98,7 @@ class CelzFooter extends StatelessWidget {
         ),
         const SizedBox(height: 24),
         Text(
-          "LoveWorld Incorporated, (a.k.a Christ Embassy) is a global ministry with a vision of taking God’s divine presence to the nations of the world and to demonstrate the character of the Holy Spirit.",
+          "LoveWorld Incorporated is a global ministry with a vision of taking God’s divine presence to the nations of the world and demonstrating the character of the Holy Spirit.",
           style: TextStyle(
             color: Colors.white.withOpacity(0.6),
             fontSize: 13,
@@ -114,9 +113,10 @@ class CelzFooter extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const _AnimatedHeader(title: "CHURCH"),
+        const _AnimatedHeader(title: "QUICK LINKS"),
         const SizedBox(height: 20),
-        ...["About", "Podcast", "FAQ"].map((link) => _FooterLink(title: link)),
+        ...["About Us", "Blog", "Events", "Testimonies", "FAQ"]
+            .map((link) => _FooterLink(title: link)),
       ],
     );
   }
@@ -125,17 +125,48 @@ class CelzFooter extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const _AnimatedHeader(title: "CONTACTS"),
+        const _AnimatedHeader(title: "CONTACT US"),
         const SizedBox(height: 20),
-        Text(
-          "Loveworld Arena Lekki,\nAare Bashiru street, Chisco B/S,\nLekki-Epe Express Way",
-          style: TextStyle(
-            color: Colors.white.withOpacity(0.5),
-            fontSize: 13,
-            height: 1.6,
-          ),
-        ),
+        _contactItem(LucideIcons.map_pin, "ADDRESS",
+            "Loveworld Arena Lekki,\nAare Bashiru street, Chisco B/S,\nLekki-Epe Express Way"),
+        _contactItem(LucideIcons.phone, "PHONE", "+234 800 123 4567"),
+        _contactItem(LucideIcons.mail, "EMAIL", "info@celz5.org"),
       ],
+    );
+  }
+
+  Widget _contactItem(IconData icon, String label, String value) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 16),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(icon, color: Colors.orangeAccent.withOpacity(0.8), size: 18),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(label,
+                    style: const TextStyle(
+                        color: Colors.white38,
+                        fontSize: 10,
+                        fontWeight: FontWeight.bold,
+                        letterSpacing: 1)),
+                const SizedBox(height: 2),
+                Text(
+                  value,
+                  style: TextStyle(
+                    color: Colors.white.withOpacity(0.7),
+                    fontSize: 13,
+                    height: 1.4,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
     );
   }
 
@@ -146,14 +177,20 @@ class CelzFooter extends StatelessWidget {
       children: [
         _AnimatedHeader(title: "FOLLOW US", isRightAligned: !isLeftAligned),
         const SizedBox(height: 20),
+        // Changed runAlignment and alignment to ensure second line starts at the beginning
         Wrap(
           spacing: 12,
-          runSpacing: 10,
+          runSpacing: 12,
+          alignment: WrapAlignment.start,
+          crossAxisAlignment: WrapCrossAlignment.start,
           children: [
             _socialIcon(LucideIcons.facebook),
             _socialIcon(LucideIcons.instagram),
-            _socialIcon(LucideIcons.twitter),
+            _socialIcon(
+                LucideIcons.twitter), // Reverted back to the Twitter logo
             _socialIcon(LucideIcons.youtube),
+            _socialIcon(LucideIcons.music_2),
+            _socialIcon(LucideIcons.message_circle),
           ],
         ),
       ],
@@ -163,10 +200,11 @@ class CelzFooter extends StatelessWidget {
   Widget _socialIcon(IconData icon) {
     return _HoverScaleWrapper(
       child: Container(
-        padding: const EdgeInsets.all(8),
+        padding: const EdgeInsets.all(10),
         decoration: BoxDecoration(
           color: Colors.white.withOpacity(0.05),
-          borderRadius: BorderRadius.circular(8),
+          shape: BoxShape.circle,
+          border: Border.all(color: Colors.white.withOpacity(0.05)),
         ),
         child: Icon(icon, color: Colors.white70, size: 18),
       ),
@@ -177,16 +215,14 @@ class CelzFooter extends StatelessWidget {
     return Flex(
       direction: isMobile ? Axis.vertical : Axis.horizontal,
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      crossAxisAlignment: CrossAxisAlignment.center,
       children: [
         Text(
-          "© 2026 CELZ5 CONNECT",
+          "© 2026 CHRIST EMBASSY LAGOS ZONE 5 • ALL RIGHTS RESERVED",
           style: TextStyle(color: Colors.white.withOpacity(0.3), fontSize: 10),
         ),
         if (isMobile) const SizedBox(height: 12),
         Text(
-          "CHRIST EMBASSY • LAGOS ZONE 5",
-          textAlign: isMobile ? TextAlign.center : TextAlign.end,
+          "",
           style: TextStyle(
             color: Colors.white.withOpacity(0.3),
             fontSize: 10,
@@ -198,7 +234,6 @@ class CelzFooter extends StatelessWidget {
   }
 }
 
-// --- REFACTORED HEADER WITH TWO-PART UNDERLINE ---
 class _AnimatedHeader extends StatefulWidget {
   final String title;
   final bool isMainLogo;
@@ -219,7 +254,7 @@ class _AnimatedHeaderState extends State<_AnimatedHeader> {
 
   @override
   Widget build(BuildContext context) {
-    final color = widget.isMainLogo ? Colors.white : Colors.blueAccent;
+    final accentColor = Colors.orangeAccent;
 
     return MouseRegion(
       onEnter: (_) => setState(() => _isHovered = true),
@@ -232,35 +267,35 @@ class _AnimatedHeaderState extends State<_AnimatedHeader> {
         children: [
           Text(
             widget.title,
+            textAlign: widget.isRightAligned ? TextAlign.right : TextAlign.left,
             style: TextStyle(
-              color: color,
+              color: Colors.white,
               fontSize: widget.isMainLogo ? 16 : 12,
               height: 1.1,
-              fontWeight: widget.isMainLogo ? FontWeight.w800 : FontWeight.w900,
-              letterSpacing: widget.isMainLogo ? 0.8 : 1.5,
+              fontWeight: FontWeight.w900,
+              letterSpacing: 1.2,
             ),
           ),
           const SizedBox(height: 8),
-          // TWO-PART UNDERLINE
           Row(
             mainAxisSize: MainAxisSize.min,
             children: [
               AnimatedContainer(
                 duration: const Duration(milliseconds: 300),
-                width: _isHovered ? 60 : 35,
+                width: _isHovered ? 50 : 30,
                 height: 3,
                 decoration: BoxDecoration(
-                  color: color,
+                  color: accentColor,
                   borderRadius: BorderRadius.circular(2),
                 ),
               ),
               const SizedBox(width: 4),
               AnimatedContainer(
                 duration: const Duration(milliseconds: 400),
-                width: _isHovered ? 15 : 8,
+                width: _isHovered ? 12 : 8,
                 height: 3,
                 decoration: BoxDecoration(
-                  color: color.withOpacity(0.5),
+                  color: accentColor.withOpacity(0.4),
                   borderRadius: BorderRadius.circular(2),
                 ),
               ),
@@ -286,7 +321,7 @@ class _FooterLinkState extends State<_FooterLink> {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.only(bottom: 10.0),
+      padding: const EdgeInsets.only(bottom: 12.0),
       child: MouseRegion(
         onEnter: (_) => setState(() => _isHovered = true),
         onExit: (_) => setState(() => _isHovered = false),
@@ -297,9 +332,10 @@ class _FooterLinkState extends State<_FooterLink> {
           child: Text(
             widget.title,
             style: TextStyle(
-              color: _isHovered ? Colors.white : Colors.white.withOpacity(0.5),
+              color: _isHovered
+                  ? Colors.orangeAccent
+                  : Colors.white.withOpacity(0.5),
               fontSize: 13,
-              fontWeight: _isHovered ? FontWeight.w500 : FontWeight.normal,
             ),
           ),
         ),

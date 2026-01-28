@@ -16,6 +16,7 @@ import 'package:celz5_app/views/live_streams_view.dart';
 import 'package:celz5_app/views/login_view.dart' as auth;
 import 'package:celz5_app/views/register_view.dart';
 import 'package:celz5_app/views/profile_view.dart';
+import 'package:celz5_app/views/event_register_view.dart';
 // If you have a physical file for contacts, import it here:
 // import 'package:celz5_app/views/contacts_view.dart';
 
@@ -43,10 +44,11 @@ class Celz5App extends StatelessWidget {
         // CONTENT ROUTES
         '/home': (context) => const HomeView(),
         '/about': (context) => const AboutView(),
-        '/testimonies': (context) => const TestimoniesView(),
+        '/testimonies': (context) => const TestimonyView(),
         '/events': (context) => const EventView(),
+        '/event-register': (context) => const EventRegisterView(),
         '/blog': (context) => const BlogView(),
-        '/higher-life': (context) => const HigherLifeView(),
+        '/higher-life': (context) => const HigherLifeArchiveApp(),
         '/live-streams': (context) => const LiveStreamsView(),
         '/profile': (context) => const ProfileView(),
         '/contacts': (context) => const ChurchWebView(
@@ -78,10 +80,10 @@ class _DashboardShellState extends State<DashboardShell> {
   final List<Widget> _pages = [
     const HomeView(), // Index 0
     const AboutView(), // Index 1
-    const TestimoniesView(), // Index 2
+    const TestimonyView(), // Index 2
     const EventView(), // Index 3
     const BlogView(), // Index 4
-    const HigherLifeView(), // Index 5
+    const HigherLifeArchiveApp(), // Index 5
     // FIX 3: Using the WebView for Contacts as intended
     const ChurchWebView(
       url: "https://kingsch.at",
