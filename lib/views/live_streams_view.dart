@@ -30,12 +30,10 @@ class _LiveStreamsViewState extends State<LiveStreamsView> {
 
   @override
   Widget build(BuildContext context) {
-    // Determine screen size
     final size = MediaQuery.of(context).size;
     final bool isDesktop = size.width > 1100;
 
     return Scaffold(
-      // Prevents the keyboard from pushing up the entire scaffold and causing overflows
       resizeToAvoidBottomInset: true,
       backgroundColor: const Color(0xFF0F172A),
       body: Container(
@@ -86,7 +84,6 @@ class _LiveStreamsViewState extends State<LiveStreamsView> {
           const Expanded(
             child: Text(
               "LIVE BROADCAST",
-              overflow: TextOverflow.ellipsis,
               style: TextStyle(
                 color: Colors.white,
                 fontWeight: FontWeight.w900,
@@ -95,9 +92,6 @@ class _LiveStreamsViewState extends State<LiveStreamsView> {
               ),
             ),
           ),
-          _buildActionIcon(LucideIcons.share_2),
-          const SizedBox(width: 12),
-          _buildActionIcon(LucideIcons.ellipsis_vertical),
         ],
       ),
     );
@@ -115,18 +109,24 @@ class _LiveStreamsViewState extends State<LiveStreamsView> {
           ),
         ),
         const SizedBox(width: 32),
-        const Expanded(flex: 3, child: ChatSection()),
+        const Expanded(flex: 3, child: ChatSection(isScrollable: true)),
       ],
     );
   }
 
   Widget _buildMobileLayout() {
-    return Column(
-      children: [
-        _buildPlayerSection(),
-        const SizedBox(height: 16),
-        const Expanded(child: ChatSection()),
-      ],
+    // Added SingleChildScrollView so the whole page scrolls on mobile
+    return SingleChildScrollView(
+      physics: const BouncingScrollPhysics(),
+      child: Column(
+        children: [
+          _buildPlayerSection(),
+          const SizedBox(height: 24),
+          const ChatSection(
+              isScrollable: false), // Disable inner scroll to allow page scroll
+          const SizedBox(height: 24),
+        ],
+      ),
     );
   }
 
@@ -163,8 +163,7 @@ class _LiveStreamsViewState extends State<LiveStreamsView> {
           crossAxisAlignment: WrapCrossAlignment.center,
           children: [
             const LiveBadge(),
-            ViewerCount(count: "1,420"),
-            // Support button wrapped to prevent overflow
+            const ViewerCount(count: "1,420"),
             TextButton.icon(
               onPressed: () {},
               icon: Icon(LucideIcons.heart, size: 16, color: brandColor),
@@ -197,7 +196,6 @@ class _LiveStreamsViewState extends State<LiveStreamsView> {
             Expanded(
               child: Text(
                 "With Pastor Deola Phillips",
-                overflow: TextOverflow.ellipsis,
                 style: TextStyle(
                   color: const Color(0xFF94A3B8).withOpacity(0.8),
                   fontSize: 14,
@@ -210,41 +208,34 @@ class _LiveStreamsViewState extends State<LiveStreamsView> {
       ],
     );
   }
-
-  Widget _buildActionIcon(IconData icon) {
-    return Container(
-      padding: const EdgeInsets.all(8),
-      decoration: BoxDecoration(
-        border: Border.all(color: Colors.white.withOpacity(0.1)),
-        borderRadius: BorderRadius.circular(10),
-      ),
-      child: Icon(icon, color: Colors.white, size: 16),
-    );
-  }
 }
 
+// --- SUPPORTING COMPONENTS ---
+
 class ChatSection extends StatelessWidget {
-  final double? maxHeight;
-  const ChatSection({super.key, this.maxHeight});
+  final bool isScrollable;
+  const ChatSection({super.key, this.isScrollable = true});
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      margin: const EdgeInsets.only(bottom: 16),
       decoration: BoxDecoration(
         color: const Color(0xFF1E293B).withOpacity(0.4),
         borderRadius: BorderRadius.circular(24),
         border: Border.all(color: Colors.white.withOpacity(0.05)),
       ),
       child: Column(
+        mainAxisSize: MainAxisSize.min, // Important for the scroll view
         children: [
           _buildHeader(),
-          Expanded(
-            child: ListView.builder(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              itemCount: 20,
-              itemBuilder: (context, i) => _buildChatItem(i),
-            ),
+          ListView.builder(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            itemCount: 15,
+            shrinkWrap: true, // Necessary when inside a SingleChildScrollView
+            physics: isScrollable
+                ? const BouncingScrollPhysics()
+                : const NeverScrollableScrollPhysics(),
+            itemBuilder: (context, i) => _buildChatItem(i),
           ),
           const ChatInputSection(),
         ],
@@ -280,8 +271,9 @@ class ChatSection extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           CircleAvatar(
-              radius: 14,
-              backgroundImage: NetworkImage("https://i.pravatar.cc/150?u=$i")),
+            radius: 14,
+            backgroundImage: NetworkImage("https://i.pravatar.cc/150?u=$i"),
+          ),
           const SizedBox(width: 12),
           Expanded(
             child: Column(
@@ -326,7 +318,6 @@ class _ChatInputSectionState extends State<ChatInputSection> {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          // Emoji Quick Bar
           SizedBox(
             height: 32,
             child: ListView.builder(

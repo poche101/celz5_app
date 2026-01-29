@@ -1,10 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
-import 'package:shared_preferences/shared_preferences.dart';
-import '../models/testimony_model.dart';
-import '../services/testimony_service.dart';
-import '../utils/toast_util.dart';
-import 'package:celz5_app/views/shared/footer.dart';
+import 'package:video_player/video_player.dart';
 
 class TestimonyView extends StatefulWidget {
   const TestimonyView({super.key});
@@ -20,158 +16,108 @@ class _TestimonyViewState extends State<TestimonyView> {
   final TextEditingController _churchController = TextEditingController();
   final TextEditingController _contentController = TextEditingController();
 
-  late Future<List<Testimony>> _testimonyFuture;
-  final Set<int> _playingIndices = {};
-  String? _token;
   bool _isPosting = false;
 
-  @override
-  void initState() {
-    super.initState();
-    _loadInitialData();
-  }
+  // Updated Mock Data with video URLs
+  final List<Map<String, String>> _mockTestimonies = [
+    {
+      "type": "video",
+      "fullName": "Sister Sarah Johnson",
+      "content": "Healed from chronic back pain after the night of bliss.",
+      "thumbnailUrl":
+          "https://images.unsplash.com/photo-1510531704581-5b2870972060?q=80&w=800",
+      "videoUrl":
+          "https://flutter.github.io/assets-for-api-docs/assets/videos/bee.mp4"
+    },
+    {
+      "type": "video",
+      "fullName": "Brother David Okoro",
+      "content": "Received a major promotion at work.",
+      "thumbnailUrl":
+          "https://images.unsplash.com/photo-1523580494863-6f3031224c94?q=80&w=800",
+      "videoUrl":
+          "https://flutter.github.io/assets-for-api-docs/assets/videos/butterfly.mp4"
+    },
+    {
+      "type": "text",
+      "fullName": "Blessing Amen",
+      "content":
+          "I want to thank God for safe delivery of my twin babies. The doctors said there would be complications, but God proved them wrong!"
+    },
+    {
+      "type": "text",
+      "fullName": "John Mark",
+      "content":
+          "God provided the tuition fees for my final year when all hope was lost. Truly, He is a provider."
+    },
+  ];
 
-  Future<void> _loadInitialData() async {
-    final prefs = await SharedPreferences.getInstance();
-    _token = prefs.getString('auth_token');
-    _refreshData();
-  }
-
-  void _refreshData() {
-    setState(() {
-      _testimonyFuture = TestimonyService(authToken: _token).fetchTestimonies();
-    });
-  }
-
-  Future<void> _handlePostTestimony() async {
+  void _handlePostTestimony() {
     if (_nameController.text.isEmpty || _contentController.text.isEmpty) {
-      ToastUtil.show(
-          context: context,
-          message: "Please fill in all required fields",
-          isError: true);
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Please fill in all required fields")),
+      );
       return;
     }
 
     setState(() => _isPosting = true);
 
-    try {
-      final service = TestimonyService(authToken: _token);
-      final result = await service.submitTestimony(
-        name: _nameController.text,
-        group: _churchController.text,
-        content: _contentController.text,
-      );
-
+    Future.delayed(const Duration(seconds: 2), () {
       if (!mounted) return;
+      setState(() => _isPosting = false);
+      Navigator.pop(context);
+      _nameController.clear();
+      _churchController.clear();
+      _contentController.clear();
 
-      if (result['status'] == 'success') {
-        Navigator.pop(context);
-        _nameController.clear();
-        _churchController.clear();
-        _contentController.clear();
-        _refreshData();
-        ToastUtil.show(
-            context: context,
-            message:
-                result['message'] ?? "Testimony shared! Pending approval.");
-      } else if (result['status'] == 'profile_incomplete') {
-        Navigator.pop(context);
-        _showProfileWarning(result['message']);
-      } else {
-        ToastUtil.show(
-            context: context,
-            message: result['message'] ?? "An error occurred",
-            isError: true);
-      }
-    } finally {
-      if (mounted) setState(() => _isPosting = false);
-    }
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Testimony shared locally!")),
+      );
+    });
   }
 
-  void _showProfileWarning(String message) {
-    showDialog(
+  // Opens the Full Testimony in a Modal
+  void _openTestimonyDetail(Map<String, String> testimony) {
+    showModalBottomSheet(
       context: context,
-      builder: (context) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-        title: const Row(
-          children: [
-            Icon(LucideIcons.user_round_pen, color: Colors.orange),
-            SizedBox(width: 10),
-            Text("Update Profile"),
-          ],
-        ),
-        content: Text(message),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child:
-                const Text("Maybe Later", style: TextStyle(color: Colors.grey)),
-          ),
-          ElevatedButton(
-            style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFF0D47A1)),
-            onPressed: () {
-              Navigator.pop(context);
-              // Add Navigation logic to Profile here
-            },
-            child: const Text("Go to Profile",
-                style: TextStyle(color: Colors.white)),
-          ),
-        ],
-      ),
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => _TestimonyDetailModal(testimony: testimony),
     );
   }
 
   @override
   Widget build(BuildContext context) {
+    final videos = _mockTestimonies.where((t) => t['type'] == 'video').toList();
+    final textTests =
+        _mockTestimonies.where((t) => t['type'] == 'text').toList();
+
     return Scaffold(
       backgroundColor: const Color(0xFFFDFDFF),
-      body: FutureBuilder<List<Testimony>>(
-        future: _testimonyFuture,
-        builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(child: CircularProgressIndicator.adaptive());
-          }
-
-          if (snapshot.hasError) return _buildErrorState();
-
-          final allData = snapshot.data ?? [];
-          if (allData.isEmpty) return _buildEmptyState();
-
-          final videos = allData.where((t) => t.type == 'video').toList();
-          final textTests = allData.where((t) => t.type == 'text').toList();
-
-          return RefreshIndicator(
-            onRefresh: () async => _refreshData(),
-            child: CustomScrollView(
-              slivers: [
-                _buildAppBar(),
-                SliverToBoxAdapter(
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 24),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        if (videos.isNotEmpty) ...[
-                          _buildSectionLabel(
-                              "Featured Miracles", LucideIcons.circle_play),
-                          const SizedBox(height: 16),
-                          _buildMobileSlider(videos),
-                          const SizedBox(height: 40),
-                        ],
-                        _buildSectionLabel(
-                            "Written Accounts", LucideIcons.book_open),
-                        _buildWrittenAccounts(textTests),
-                        const SizedBox(height: 40),
-                        const CelzFooter(),
-                      ],
-                    ),
-                  ),
-                ),
-              ],
+      body: CustomScrollView(
+        slivers: [
+          _buildAppBar(),
+          SliverToBoxAdapter(
+            child: Padding(
+              padding: const EdgeInsets.symmetric(vertical: 24),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  if (videos.isNotEmpty) ...[
+                    _buildSectionLabel(
+                        "Featured Miracles", LucideIcons.circle_play),
+                    const SizedBox(height: 16),
+                    _buildMobileSlider(videos),
+                    const SizedBox(height: 40),
+                  ],
+                  _buildSectionLabel("Written Accounts", LucideIcons.book_open),
+                  _buildWrittenAccounts(textTests),
+                  const SizedBox(height: 100),
+                ],
+              ),
             ),
-          );
-        },
+          ),
+        ],
       ),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: _showShareForm,
@@ -188,7 +134,13 @@ class _TestimonyViewState extends State<TestimonyView> {
       pinned: true,
       elevation: 0,
       backgroundColor: const Color(0xFF0A192F),
-      iconTheme: const IconThemeData(color: Colors.white),
+      // BACK ARROW FIX: Explicitly ensuring navigation to 'views/home_view'
+      leading: IconButton(
+        icon: const Icon(LucideIcons.arrow_left, color: Colors.white),
+        onPressed: () {
+          Navigator.pushReplacementNamed(context, 'views/home_view');
+        },
+      ),
       centerTitle: true,
       title: Column(
         mainAxisSize: MainAxisSize.min,
@@ -223,7 +175,7 @@ class _TestimonyViewState extends State<TestimonyView> {
     );
   }
 
-  Widget _buildMobileSlider(List<Testimony> videos) {
+  Widget _buildMobileSlider(List<Map<String, String>> videos) {
     return SizedBox(
       height: 260,
       child: PageView.builder(
@@ -231,59 +183,74 @@ class _TestimonyViewState extends State<TestimonyView> {
         itemCount: videos.length,
         itemBuilder: (context, index) {
           final t = videos[index];
-          return _buildVideoCard(index, t.fullName, t.content,
-              t.thumbnailUrl ?? "https://picsum.photos/400/250");
+          return GestureDetector(
+            onTap: () => _openTestimonyDetail(t),
+            child: _buildVideoCard(
+                t['fullName']!, t['content']!, t['thumbnailUrl']!),
+          );
         },
       ),
     );
   }
 
-  Widget _buildVideoCard(int index, String name, String title, String img) {
-    bool isPlaying = _playingIndices.contains(index);
-    return GestureDetector(
-      onTap: () => setState(() {
-        _playingIndices.clear();
-        if (!isPlaying) _playingIndices.add(index);
-      }),
+  Widget _buildVideoCard(String name, String title, String img) {
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 10),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(28),
+        image: DecorationImage(image: NetworkImage(img), fit: BoxFit.cover),
+      ),
       child: Container(
-        margin: const EdgeInsets.symmetric(horizontal: 10),
+        padding: const EdgeInsets.all(20),
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(28),
-          image: DecorationImage(image: NetworkImage(img), fit: BoxFit.cover),
+          gradient: const LinearGradient(
+              begin: Alignment.topCenter,
+              end: Alignment.bottomCenter,
+              colors: [Colors.transparent, Colors.black87]),
         ),
-        child: Container(
-          padding: const EdgeInsets.all(20),
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(28),
-            gradient: const LinearGradient(
-                begin: Alignment.topCenter,
-                end: Alignment.bottomCenter,
-                colors: [Colors.transparent, Colors.black87]),
-          ),
-          child: Center(
-              child: Icon(
-                  isPlaying
-                      ? LucideIcons.circle_pause
-                      : LucideIcons.circle_play,
-                  color: Colors.orange,
-                  size: 50)),
+        child: Stack(
+          children: [
+            const Center(
+                child: Icon(LucideIcons.circle_play,
+                    color: Colors.orange, size: 50)),
+            Positioned(
+              bottom: 0,
+              left: 0,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(name,
+                      style: const TextStyle(
+                          color: Colors.white, fontWeight: FontWeight.bold)),
+                  Text(title,
+                      style:
+                          const TextStyle(color: Colors.white70, fontSize: 12),
+                      maxLines: 1),
+                ],
+              ),
+            )
+          ],
         ),
       ),
     );
   }
 
-  Widget _buildWrittenAccounts(List<Testimony> tests) {
+  Widget _buildWrittenAccounts(List<Map<String, String>> tests) {
     return ListView.separated(
       shrinkWrap: true,
       physics: const NeverScrollableScrollPhysics(),
       padding: const EdgeInsets.all(20),
       itemCount: tests.length,
       separatorBuilder: (context, index) => const SizedBox(height: 12),
-      itemBuilder: (context, index) => _buildTextItem(tests[index]),
+      itemBuilder: (context, index) => GestureDetector(
+        onTap: () => _openTestimonyDetail(tests[index]),
+        child: _buildTextItem(tests[index]),
+      ),
     );
   }
 
-  Widget _buildTextItem(Testimony t) {
+  Widget _buildTextItem(Map<String, String> t) {
     return Container(
       decoration: BoxDecoration(
         color: Colors.white,
@@ -295,12 +262,12 @@ class _TestimonyViewState extends State<TestimonyView> {
       ),
       child: ListTile(
         contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
-        title: Text(t.fullName,
+        title: Text(t['fullName']!,
             style: const TextStyle(
                 fontWeight: FontWeight.bold, color: Color(0xFF0A192F))),
         subtitle: Padding(
           padding: const EdgeInsets.only(top: 4),
-          child: Text(t.content,
+          child: Text(t['content']!,
               maxLines: 2,
               overflow: TextOverflow.ellipsis,
               style: TextStyle(color: Colors.grey[600])),
@@ -384,11 +351,9 @@ class _TestimonyViewState extends State<TestimonyView> {
                       child: ElevatedButton(
                         onPressed: _isPosting
                             ? null
-                            : () async {
+                            : () {
                                 setModalState(() => _isPosting = true);
-                                await _handlePostTestimony();
-                                if (mounted)
-                                  setModalState(() => _isPosting = false);
+                                _handlePostTestimony();
                               },
                         style: ElevatedButton.styleFrom(
                           backgroundColor: const Color(0xFF0A192F),
@@ -440,35 +405,156 @@ class _TestimonyViewState extends State<TestimonyView> {
       ),
     );
   }
+}
 
-  Widget _buildEmptyState() {
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(LucideIcons.message_square_dashed,
-              size: 64, color: Colors.grey[300]),
-          const SizedBox(height: 16),
-          const Text("No testimonies yet.",
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-          TextButton(
-              onPressed: _refreshData, child: const Text("Tap to Refresh")),
-        ],
-      ),
-    );
+// Separate Widget for the Testimony Detail Modal
+class _TestimonyDetailModal extends StatefulWidget {
+  final Map<String, String> testimony;
+  const _TestimonyDetailModal({required this.testimony});
+
+  @override
+  State<_TestimonyDetailModal> createState() => _TestimonyDetailModalState();
+}
+
+class _TestimonyDetailModalState extends State<_TestimonyDetailModal> {
+  VideoPlayerController? _controller;
+
+  @override
+  void initState() {
+    super.initState();
+    if (widget.testimony['type'] == 'video') {
+      _controller = VideoPlayerController.networkUrl(
+        Uri.parse(widget.testimony['videoUrl']!),
+      )..initialize().then((_) {
+          setState(() {}); // Show first frame
+        });
+    }
   }
 
-  Widget _buildErrorState() {
-    return Center(
+  @override
+  void dispose() {
+    _controller?.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.only(top: 12),
+      decoration: const BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.vertical(top: Radius.circular(32)),
+      ),
       child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
+        mainAxisSize: MainAxisSize.min,
         children: [
-          const Icon(LucideIcons.wifi_off, size: 48, color: Colors.redAccent),
-          const SizedBox(height: 16),
-          const Text("Unable to connect",
-              style: TextStyle(fontWeight: FontWeight.bold)),
-          const SizedBox(height: 16),
-          ElevatedButton(onPressed: _refreshData, child: const Text("Retry")),
+          Container(
+            width: 40,
+            height: 4,
+            decoration: BoxDecoration(
+                color: Colors.grey[300],
+                borderRadius: BorderRadius.circular(2)),
+          ),
+          Flexible(
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.all(24),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      CircleAvatar(
+                        backgroundColor: const Color(0xFFF0F7FF),
+                        child: Text(widget.testimony['fullName']![0],
+                            style: const TextStyle(
+                                fontWeight: FontWeight.bold,
+                                color: Color(0xFF0D47A1))),
+                      ),
+                      const SizedBox(width: 12),
+                      Text(
+                        widget.testimony['fullName']!,
+                        style: const TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                            color: Color(0xFF0A192F)),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 20),
+                  if (widget.testimony['type'] == 'video') ...[
+                    ClipRRect(
+                      borderRadius: BorderRadius.circular(20),
+                      child: AspectRatio(
+                        aspectRatio: _controller?.value.aspectRatio ?? 16 / 9,
+                        child: Stack(
+                          alignment: Alignment.center,
+                          children: [
+                            if (_controller != null &&
+                                _controller!.value.isInitialized)
+                              VideoPlayer(_controller!)
+                            else
+                              const CircularProgressIndicator(),
+                            GestureDetector(
+                              onTap: () {
+                                setState(() {
+                                  _controller!.value.isPlaying
+                                      ? _controller!.pause()
+                                      : _controller!.play();
+                                });
+                              },
+                              child: Icon(
+                                _controller?.value.isPlaying ?? false
+                                    ? LucideIcons.circle_pause
+                                    : LucideIcons.circle_play,
+                                size: 64,
+                                color: Colors.orange.withOpacity(0.8),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    VideoProgressIndicator(_controller!, allowScrubbing: true),
+                  ],
+                  const SizedBox(height: 20),
+                  const Text(
+                    "Testimony Details",
+                    style: TextStyle(
+                        fontSize: 14,
+                        color: Colors.orange,
+                        fontWeight: FontWeight.bold,
+                        letterSpacing: 1),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    widget.testimony['content']!,
+                    style: TextStyle(
+                        fontSize: 16,
+                        height: 1.6,
+                        color: Colors.grey[800],
+                        fontStyle: FontStyle.italic),
+                  ),
+                  const SizedBox(height: 40),
+                  SizedBox(
+                    width: double.infinity,
+                    height: 50,
+                    child: TextButton(
+                      style: TextButton.styleFrom(
+                          backgroundColor: Colors.grey[100],
+                          shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12))),
+                      onPressed: () => Navigator.pop(context),
+                      child: const Text("Done",
+                          style: TextStyle(
+                              color: Color(0xFF0A192F),
+                              fontWeight: FontWeight.bold)),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
         ],
       ),
     );

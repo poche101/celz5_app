@@ -53,7 +53,7 @@ class HomeAboutSection extends StatelessWidget {
                       index: 1,
                       title: "Our Mission",
                       description:
-                          "To raise generations of men and women who will come into their inheritance in Christ and fulfill God's purpose for their lives.",
+                          "To raise generations of men and women who will come into their inheritance to fulfill God’s dream. To make known and to bring them into their inheritance in Christ.",
                       icon: LucideIcons.target,
                       color: const Color(0xFF1976D2),
                       top: 60,
@@ -61,9 +61,9 @@ class HomeAboutSection extends StatelessWidget {
                     ),
                     _AboutCard(
                       index: 2,
-                      title: "What We Do",
+                      title: "Worship With Us.",
                       description:
-                          "Through global crusades, digital evangelism, and community outreach, we distribute the message of eternal life to every soul.",
+                          "Join a congregation of the mighty as we worship God in spirit and truth. You can participate both onsite and online from anywhere in the world.",
                       icon: LucideIcons.activity,
                       color: const Color(0xFF2196F3),
                       top: 120,

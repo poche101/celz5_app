@@ -34,6 +34,18 @@ class CelzNavbar extends StatelessWidget implements PreferredSizeWidget {
     },
   ];
 
+  void _handleNavigation(BuildContext context, String route) {
+    if (route == '/live-streams') {
+      showDialog(
+        context: context,
+        barrierDismissible: true,
+        builder: (context) => const LiveAccessModal(),
+      );
+    } else {
+      Navigator.of(context).pushNamed(route);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final bool isMobile = MediaQuery.of(context).size.width < 1250;
@@ -62,7 +74,7 @@ class CelzNavbar extends StatelessWidget implements PreferredSizeWidget {
                           title: item['name']!,
                           isActive: currentRoute == item['route'],
                           onTap: () =>
-                              Navigator.of(context).pushNamed(item['route']!),
+                              _handleNavigation(context, item['route']!),
                         );
                       }).toList(),
                     ),
@@ -72,15 +84,12 @@ class CelzNavbar extends StatelessWidget implements PreferredSizeWidget {
                     _buildProfileDropdown(context),
                   ],
                   if (isMobile)
-                    // FIX: Builder provides the correct context to find the Scaffold
                     Builder(
                       builder: (scaffoldContext) => IconButton(
                         icon: const Icon(LucideIcons.menu,
                             color: Colors.white, size: 28),
-                        onPressed: () {
-                          // This specifically triggers the endDrawer (Right Side)
-                          Scaffold.of(scaffoldContext).openEndDrawer();
-                        },
+                        onPressed: () =>
+                            Scaffold.of(scaffoldContext).openEndDrawer(),
                       ),
                     ),
                 ],
@@ -92,7 +101,6 @@ class CelzNavbar extends StatelessWidget implements PreferredSizeWidget {
     );
   }
 
-  // Logo and desktop buttons remain the same for consistency
   Widget _buildLoginButton(BuildContext context) {
     return GestureDetector(
       onTap: () => Navigator.of(context).pushNamed('/login'),
@@ -215,8 +223,114 @@ class CelzNavbar extends StatelessWidget implements PreferredSizeWidget {
   }
 }
 
-// --- ANIMATED MOBILE DRAWER (Right to Left Slide) ---
+// --- LIVE ACCESS MODAL ---
+class LiveAccessModal extends StatefulWidget {
+  const LiveAccessModal({super.key});
 
+  @override
+  State<LiveAccessModal> createState() => _LiveAccessModalState();
+}
+
+class _LiveAccessModalState extends State<LiveAccessModal> {
+  final _formKey = GlobalKey<FormState>();
+  final _nameController = TextEditingController();
+  final _phoneController = TextEditingController();
+
+  @override
+  Widget build(BuildContext context) {
+    return BackdropFilter(
+      filter: ImageFilter.blur(sigmaX: 8, sigmaY: 8),
+      child: Dialog(
+        backgroundColor: CelzNavbar.dropdownBgColor,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(20),
+          side: const BorderSide(color: Colors.white10),
+        ),
+        child: Container(
+          padding: const EdgeInsets.all(24),
+          constraints: const BoxConstraints(maxWidth: 400),
+          child: Form(
+            key: _formKey,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Icon(LucideIcons.monitor_play,
+                    color: CelzNavbar.accentColor, size: 48),
+                const SizedBox(height: 16),
+                const Text("Live Stream Access",
+                    style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 22,
+                        fontWeight: FontWeight.bold)),
+                const SizedBox(height: 8),
+                const Text(
+                    "Please provide your details to join the live service.",
+                    textAlign: TextAlign.center,
+                    style: TextStyle(color: Colors.white70, fontSize: 14)),
+                const SizedBox(height: 24),
+                _buildField("Full Name", LucideIcons.user, _nameController),
+                const SizedBox(height: 16),
+                _buildField("Phone Number", LucideIcons.phone, _phoneController,
+                    isPhone: true),
+                const SizedBox(height: 24),
+                SizedBox(
+                  width: double.infinity,
+                  height: 50,
+                  child: ElevatedButton(
+                    onPressed: () {
+                      if (_formKey.currentState!.validate()) {
+                        Navigator.pop(context); // Close modal
+                        Navigator.of(context)
+                            .pushNamed('/live-streams'); // Navigate
+                      }
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: CelzNavbar.accentColor,
+                      shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12)),
+                    ),
+                    child: const Text("Enter Stream",
+                        style: TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.bold,
+                            fontSize: 16)),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildField(
+      String label, IconData icon, TextEditingController controller,
+      {bool isPhone = false}) {
+    return TextFormField(
+      controller: controller,
+      keyboardType: isPhone ? TextInputType.phone : TextInputType.text,
+      style: const TextStyle(color: Colors.white),
+      decoration: InputDecoration(
+        labelText: label,
+        labelStyle: const TextStyle(color: Colors.white60),
+        prefixIcon: Icon(icon, color: CelzNavbar.accentColor, size: 20),
+        enabledBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+            borderSide: const BorderSide(color: Colors.white10)),
+        focusedBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+            borderSide: const BorderSide(color: CelzNavbar.accentColor)),
+        filled: true,
+        fillColor: Colors.white.withOpacity(0.05),
+      ),
+      validator: (value) =>
+          (value == null || value.isEmpty) ? "Required" : null,
+    );
+  }
+}
+
+// --- ANIMATED MOBILE DRAWER ---
 class CelzMobileDrawer extends StatefulWidget {
   const CelzMobileDrawer({super.key});
 
@@ -232,9 +346,8 @@ class _CelzMobileDrawerState extends State<CelzMobileDrawer>
   void initState() {
     super.initState();
     _controller = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 700),
-    )..forward();
+        vsync: this, duration: const Duration(milliseconds: 700))
+      ..forward();
   }
 
   @override
@@ -246,7 +359,6 @@ class _CelzMobileDrawerState extends State<CelzMobileDrawer>
   @override
   Widget build(BuildContext context) {
     final String currentRoute = ModalRoute.of(context)?.settings.name ?? '';
-
     final List<Map<String, dynamic>> allItems = [
       ...CelzNavbar.navItems,
       {
@@ -265,50 +377,32 @@ class _CelzMobileDrawerState extends State<CelzMobileDrawer>
     return Drawer(
       backgroundColor: CelzNavbar.navBgColor,
       elevation: 20,
-      child: Container(
-        decoration: BoxDecoration(
-          border: Border(
-              left:
-                  BorderSide(color: Colors.white.withOpacity(0.05), width: 1)),
-        ),
-        child: Column(
-          children: [
-            _buildDrawerHeader(),
-            Expanded(
-              child: ListView.builder(
-                padding:
-                    const EdgeInsets.symmetric(vertical: 20, horizontal: 15),
-                itemCount: allItems.length,
-                itemBuilder: (context, index) {
-                  // STAGGERED SLIDE-IN ANIMATION
-                  final animation = CurvedAnimation(
-                    parent: _controller,
-                    curve: Interval(
-                      (0.3 + (index * 0.06)).clamp(0, 1.0),
-                      1.0,
-                      curve: Curves.easeOutBack,
-                    ),
-                  );
-
-                  return AnimatedBuilder(
-                    animation: animation,
-                    builder: (context, child) {
-                      return Transform.translate(
-                        offset: Offset(80 * (1 - animation.value), 0),
-                        child: Opacity(
-                          opacity: animation.value,
-                          child: child,
-                        ),
-                      );
-                    },
-                    child: _buildDrawerItem(
-                        context, allItems[index], currentRoute),
-                  );
-                },
-              ),
+      child: Column(
+        children: [
+          _buildDrawerHeader(),
+          Expanded(
+            child: ListView.builder(
+              padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 15),
+              itemCount: allItems.length,
+              itemBuilder: (context, index) {
+                final animation = CurvedAnimation(
+                  parent: _controller,
+                  curve: Interval((0.3 + (index * 0.06)).clamp(0, 1.0), 1.0,
+                      curve: Curves.easeOutBack),
+                );
+                return AnimatedBuilder(
+                  animation: animation,
+                  builder: (context, child) => Transform.translate(
+                    offset: Offset(80 * (1 - animation.value), 0),
+                    child: Opacity(opacity: animation.value, child: child),
+                  ),
+                  child:
+                      _buildDrawerItem(context, allItems[index], currentRoute),
+                );
+              },
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
@@ -318,9 +412,8 @@ class _CelzMobileDrawerState extends State<CelzMobileDrawer>
       width: double.infinity,
       padding: const EdgeInsets.only(top: 70, bottom: 40, left: 20, right: 20),
       decoration: const BoxDecoration(
-        color: Color(0xFF112240),
-        borderRadius: BorderRadius.only(bottomLeft: Radius.circular(30)),
-      ),
+          color: Color(0xFF112240),
+          borderRadius: BorderRadius.only(bottomLeft: Radius.circular(30))),
       child: Column(
         children: [
           const Text("CHRIST EMBASSY",
@@ -332,27 +425,23 @@ class _CelzMobileDrawerState extends State<CelzMobileDrawer>
           const SizedBox(height: 10),
           ShaderMask(
             shaderCallback: (bounds) => const LinearGradient(
-              colors: [Color(0xFF64B5F6), Color(0xFF2196F3)],
-            ).createShader(bounds),
-            child: const Text(
-              "Lagos Zone 5",
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                  color: Colors.white,
-                  fontWeight: FontWeight.w900,
-                  fontSize: 26,
-                  fontStyle: FontStyle.italic),
-            ),
+                    colors: [Color(0xFF64B5F6), Color(0xFF2196F3)])
+                .createShader(bounds),
+            child: const Text("Lagos Zone 5",
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.w900,
+                    fontSize: 26,
+                    fontStyle: FontStyle.italic)),
           ),
           const SizedBox(height: 5),
           Container(
-            height: 2,
-            width: 40,
-            decoration: BoxDecoration(
-              color: CelzNavbar.accentColor,
-              borderRadius: BorderRadius.circular(10),
-            ),
-          )
+              height: 2,
+              width: 40,
+              decoration: BoxDecoration(
+                  color: CelzNavbar.accentColor,
+                  borderRadius: BorderRadius.circular(10))),
         ],
       ),
     );
@@ -365,42 +454,41 @@ class _CelzMobileDrawerState extends State<CelzMobileDrawer>
 
     return Padding(
       padding: const EdgeInsets.only(bottom: 10),
-      child: Material(
-        color: Colors.transparent,
-        child: ListTile(
-          onTap: () {
-            Navigator.pop(context);
+      child: ListTile(
+        onTap: () {
+          Navigator.pop(context); // Close drawer
+          if (item['route'] == '/live-streams') {
+            showDialog(
+                context: context,
+                builder: (context) => const LiveAccessModal());
+          } else {
             Navigator.of(context).pushNamed(item['route']);
-          },
-          shape:
-              RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-          // GLOW EFFECT FOR ACTIVE ITEM
-          tileColor: isActive
-              ? CelzNavbar.accentColor.withOpacity(0.15)
-              : (isButton ? CelzNavbar.accentColor : Colors.transparent),
-          leading: Icon(item['icon'],
-              color: (isActive || isButton) ? Colors.white : Colors.white70,
-              size: 22),
-          title: Text(
-            item['name'],
+          }
+        },
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        tileColor: isActive
+            ? CelzNavbar.accentColor.withOpacity(0.15)
+            : (isButton ? CelzNavbar.accentColor : Colors.transparent),
+        leading: Icon(item['icon'],
+            color: (isActive || isButton) ? Colors.white : Colors.white70,
+            size: 22),
+        title: Text(item['name'],
             style: TextStyle(
-              color: Colors.white,
-              fontSize: 16,
-              fontWeight:
-                  (isActive || isButton) ? FontWeight.bold : FontWeight.w400,
-            ),
-          ),
-          trailing: isActive
-              ? Icon(Icons.circle, size: 8, color: CelzNavbar.accentColor)
-              : const Icon(LucideIcons.chevron_right,
-                  color: Colors.white10, size: 16),
-        ),
+                color: Colors.white,
+                fontSize: 16,
+                fontWeight: (isActive || isButton)
+                    ? FontWeight.bold
+                    : FontWeight.w400)),
+        trailing: isActive
+            ? const Icon(Icons.circle, size: 8, color: CelzNavbar.accentColor)
+            : const Icon(LucideIcons.chevron_right,
+                color: Colors.white10, size: 16),
       ),
     );
   }
 }
 
-// --- ANIMATED HOVER ITEM (Desktop Only) ---
+// --- ANIMATED HOVER ITEM (Desktop) ---
 class _NavHoverItem extends StatefulWidget {
   final String title;
   final bool isActive;
@@ -443,7 +531,6 @@ class _NavHoverItemState extends State<_NavHoverItem> {
               const SizedBox(height: 6),
               AnimatedContainer(
                 duration: const Duration(milliseconds: 300),
-                curve: Curves.easeOutCubic,
                 height: 2.5,
                 width: widget.isActive ? 24 : (_isHovered ? 16 : 0),
                 decoration: BoxDecoration(

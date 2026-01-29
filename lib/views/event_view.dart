@@ -12,57 +12,47 @@ class _EventViewState extends State<EventView>
     with SingleTickerProviderStateMixin {
   late AnimationController _pulseController;
 
-  final Color primaryDark = const Color(0xFF0A192F);
   final Color primaryBlue = const Color(0xFF0D47A1);
   final Color accentOrange = Colors.orangeAccent;
 
-  // Pagination & Data state
   int _itemsToShow = 3;
+
   final List<Map<String, dynamic>> _allEvents = [
     {
       "title": "Global Prayer Night",
-      "location": "Main Auditorium",
+      "date": "Friday, 15th Feb",
       "time": "08:00 PM",
       "isLive": true,
-      "desc":
-          "Join us for a powerful night of intercession and worship as we pray for our community and the world."
+      "image":
+          "https://images.unsplash.com/photo-1510531704581-5b2870972060?q=80&w=800",
+      "desc": "Join us for a powerful night of intercession and worship."
     },
     {
       "title": "Special Sunday Service",
-      "location": "Main Sanctuary",
+      "date": "Sunday, 17th Feb",
       "time": "09:00 AM",
       "isLive": false,
-      "desc": "A dedicated service focused on spiritual growth and fellowship."
+      "image":
+          "https://images.unsplash.com/photo-1438232992991-995b7058bbb3?q=80&w=800",
+      "desc": "A dedicated service focused on spiritual growth."
     },
     {
       "title": "Midweek Revival",
-      "location": "Community Center",
+      "date": "Wednesday, 20th Feb",
       "time": "06:00 PM",
       "isLive": false,
-      "desc":
-          "Recharge your spirit in the middle of the week with deep teaching."
+      "image":
+          "https://images.unsplash.com/photo-1515162305285-0293e4767cc2?q=80&w=800",
+      "desc": "Recharge your spirit in the middle of the week."
     },
     {
       "title": "Youth Night Live",
-      "location": "Online / Zoom",
+      "date": "Friday, 22nd Feb",
       "time": "08:00 PM",
       "isLive": false,
-      "desc":
-          "High energy worship and relevant messages for the next generation."
-    },
-    {
-      "title": "Leadership Summit",
-      "location": "Conference Hall B",
-      "time": "10:00 AM",
-      "isLive": false,
-      "desc": "Strategic planning and leadership development session."
-    },
-    {
-      "title": "Community Outreach",
-      "location": "Downtown Park",
-      "time": "11:00 AM",
-      "isLive": false,
-      "desc": "Taking our message to the streets through service and kindness."
+      "image":
+          "https://images.unsplash.com/photo-1523580494863-6f3031224c94?q=80&w=800",
+      "desc": "High energy worship for the next generation."
     },
   ];
 
@@ -81,16 +71,10 @@ class _EventViewState extends State<EventView>
     super.dispose();
   }
 
-  void _loadMore() {
-    setState(() {
-      if (_itemsToShow < _allEvents.length) _itemsToShow += 2;
-    });
-  }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF1F5F9),
+      backgroundColor: const Color(0xFFF8FAFC),
       body: CustomScrollView(
         physics: const BouncingScrollPhysics(),
         slivers: [
@@ -101,7 +85,7 @@ class _EventViewState extends State<EventView>
               child: Row(
                 children: [
                   const Text(
-                    "Latest Events",
+                    "Upcoming Events",
                     style: TextStyle(
                         fontSize: 22,
                         fontWeight: FontWeight.w900,
@@ -118,31 +102,17 @@ class _EventViewState extends State<EventView>
             padding: const EdgeInsets.symmetric(horizontal: 24),
             sliver: SliverList(
               delegate: SliverChildBuilderDelegate(
-                (context, index) {
-                  final event = _allEvents[index];
-                  return Padding(
-                    padding: const EdgeInsets.only(bottom: 16),
-                    child: _buildEventCard(event),
-                  );
-                },
+                (context, index) => _buildVerticalEventCard(_allEvents[index]),
                 childCount: _itemsToShow,
               ),
             ),
           ),
           if (_itemsToShow < _allEvents.length)
             SliverToBoxAdapter(
-              child: Padding(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
-                child: OutlinedButton(
-                  onPressed: _loadMore,
-                  style: OutlinedButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(vertical: 16),
-                    side: BorderSide(color: primaryBlue),
-                    shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12)),
-                  ),
-                  child: Text("Load More Events",
+              child: Center(
+                child: TextButton(
+                  onPressed: () => setState(() => _itemsToShow++),
+                  child: Text("Load More",
                       style: TextStyle(
                           color: primaryBlue, fontWeight: FontWeight.bold)),
                 ),
@@ -158,57 +128,120 @@ class _EventViewState extends State<EventView>
     return SliverAppBar(
       expandedHeight: 240,
       pinned: true,
-      elevation: 0,
-      leading: IconButton(
-        icon: const Icon(LucideIcons.arrow_left, color: Colors.white),
-        onPressed: () => Navigator.pushReplacementNamed(context, '/home'),
-      ),
-      backgroundColor: primaryDark,
+      backgroundColor: primaryBlue,
       flexibleSpace: FlexibleSpaceBar(
-        background: Container(
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              begin: Alignment.topLeft,
-              colors: [primaryDark, primaryBlue, primaryDark],
-            ),
-          ),
-          child: Stack(
-            children: [
-              Positioned(
-                top: -30,
-                right: -30,
-                child: Icon(LucideIcons.sparkles,
-                    size: 200, color: Colors.white.withOpacity(0.05)),
+        background: Stack(
+          fit: StackFit.expand,
+          children: [
+            Image.network(
+                "https://images.unsplash.com/photo-1544427920-c49ccfb85579?q=80&w=1200",
+                fit: BoxFit.cover),
+            Container(
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  colors: [Colors.transparent, primaryBlue.withOpacity(0.8)],
+                ),
               ),
-              Padding(
-                padding: const EdgeInsets.all(24.0),
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.end,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Text(
-                      "Church Events",
+            ),
+            Positioned(
+              bottom: 30,
+              left: 24,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text("CHURCH EVENTS",
                       style: TextStyle(
                           color: Colors.white,
-                          fontSize: 34,
-                          fontWeight: FontWeight.w900),
+                          fontSize: 32,
+                          fontWeight: FontWeight.w900)),
+                  const SizedBox(height: 8),
+                  Row(
+                    children: [
+                      Container(
+                          width: 40,
+                          height: 5,
+                          decoration: BoxDecoration(
+                              color: accentOrange,
+                              borderRadius: BorderRadius.circular(10))),
+                      const SizedBox(width: 6),
+                      Container(
+                          width: 12,
+                          height: 5,
+                          decoration: BoxDecoration(
+                              color: accentOrange,
+                              borderRadius: BorderRadius.circular(10))),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildVerticalEventCard(Map<String, dynamic> event) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 24),
+      child: Material(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(24),
+        elevation: 2,
+        shadowColor: Colors.black12,
+        child: InkWell(
+          borderRadius: BorderRadius.circular(24),
+          onTap: () => _showRegistrationDialog(event),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Stack(
+                children: [
+                  ClipRRect(
+                    borderRadius:
+                        const BorderRadius.vertical(top: Radius.circular(24)),
+                    child: Image.network(event['image'],
+                        height: 180, width: double.infinity, fit: BoxFit.cover),
+                  ),
+                  if (event['isLive'] == true)
+                    Positioned(
+                      top: 16,
+                      left: 16,
+                      child: FadeTransition(
+                        opacity: _pulseController,
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 12, vertical: 6),
+                          decoration: BoxDecoration(
+                              color: Colors.redAccent,
+                              borderRadius: BorderRadius.circular(20)),
+                          child: const Text("LIVE",
+                              style: TextStyle(
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 12)),
+                        ),
+                      ),
                     ),
-                    const SizedBox(height: 6),
+                ],
+              ),
+              Padding(
+                padding: const EdgeInsets.all(20),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(event['title'],
+                        style: const TextStyle(
+                            fontSize: 20, fontWeight: FontWeight.bold)),
+                    const SizedBox(height: 10),
                     Row(
                       children: [
-                        Container(
-                            width: 60,
-                            height: 5,
-                            decoration: BoxDecoration(
-                                color: accentOrange,
-                                borderRadius: BorderRadius.circular(10))),
-                        const SizedBox(width: 6),
-                        Container(
-                            width: 15,
-                            height: 5,
-                            decoration: BoxDecoration(
-                                color: accentOrange,
-                                borderRadius: BorderRadius.circular(10))),
+                        Icon(LucideIcons.calendar,
+                            size: 16, color: primaryBlue),
+                        const SizedBox(width: 8),
+                        Text(event['date']),
                       ],
                     ),
                   ],
@@ -221,169 +254,139 @@ class _EventViewState extends State<EventView>
     );
   }
 
-  Widget _buildEventCard(Map<String, dynamic> event) {
-    bool isLive = event['isLive'];
-    return GestureDetector(
-      onTap: () => _showEventDetail(event),
-      child: Container(
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(24),
-          boxShadow: [
-            BoxShadow(
-                color: Colors.black.withOpacity(0.04),
-                blurRadius: 24,
-                offset: const Offset(0, 8))
-          ],
-        ),
-        child: ClipRRect(
-          borderRadius: BorderRadius.circular(24),
-          child: IntrinsicHeight(
-            child: Row(
-              children: [
-                Container(width: 6, color: isLive ? accentOrange : primaryBlue),
-                Expanded(
-                  child: Padding(
-                    padding: const EdgeInsets.all(20),
-                    child: Row(
-                      children: [
-                        _buildDynamicIcon(isLive),
-                        const SizedBox(width: 20),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              if (isLive)
-                                Text("LIVE NOW",
-                                    style: TextStyle(
-                                        color: accentOrange,
-                                        fontSize: 10,
-                                        fontWeight: FontWeight.w900)),
-                              Text(event['title'],
+  void _showRegistrationDialog(Map<String, dynamic> event) {
+    showGeneralDialog(
+      context: context,
+      barrierDismissible: true,
+      barrierLabel: '',
+      barrierColor: Colors.black54,
+      transitionDuration: const Duration(milliseconds: 400),
+      pageBuilder: (context, anim1, anim2) {
+        return Center(
+          child: ScaleTransition(
+            scale: CurvedAnimation(parent: anim1, curve: Curves.easeOutBack),
+            child: Container(
+              margin: const EdgeInsets.symmetric(horizontal: 24),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(24),
+                boxShadow: const [
+                  BoxShadow(
+                    color: Colors.black26,
+                    blurRadius: 20,
+                    offset: Offset(0, 10),
+                  )
+                ],
+              ),
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(24),
+                child: Material(
+                  color: Colors.white,
+                  child: Stack(
+                    children: [
+                      Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          // RESTRICTED BANNER AREA
+                          SizedBox(
+                            height: 160,
+                            width: double.infinity,
+                            child: Stack(
+                              fit: StackFit.expand,
+                              children: [
+                                Image.network(event['image'],
+                                    fit: BoxFit.cover),
+                                Container(
+                                  decoration: const BoxDecoration(
+                                    gradient: LinearGradient(
+                                      begin: Alignment.topCenter,
+                                      end: Alignment.bottomCenter,
+                                      colors: [
+                                        Colors.black45,
+                                        Colors.transparent
+                                      ],
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          // CONTENT AREA
+                          Padding(
+                            padding: const EdgeInsets.fromLTRB(24, 20, 24, 24),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  event['title'],
                                   style: const TextStyle(
-                                      fontWeight: FontWeight.bold,
-                                      fontSize: 18,
-                                      color: Color(0xFF1E293B))),
-                              const SizedBox(height: 4),
-                              Text(event['time'],
+                                      fontSize: 22,
+                                      fontWeight: FontWeight.bold),
+                                ),
+                                const SizedBox(height: 12),
+                                Text(
+                                  event['desc'],
                                   style: TextStyle(
-                                      color: Colors.grey[600], fontSize: 13)),
-                            ],
+                                      color: Colors.grey[600], height: 1.4),
+                                ),
+                                const SizedBox(height: 24),
+                                SizedBox(
+                                  width: double.infinity,
+                                  height: 54,
+                                  child: ElevatedButton(
+                                    style: ElevatedButton.styleFrom(
+                                      backgroundColor: primaryBlue,
+                                      elevation: 0,
+                                      shape: RoundedRectangleBorder(
+                                          borderRadius:
+                                              BorderRadius.circular(14)),
+                                    ),
+                                    onPressed: () {
+                                      Navigator.pop(context);
+                                      Navigator.pushNamed(
+                                          context, '/event-register');
+                                    },
+                                    child: const Text(
+                                      "Confirm Attendance",
+                                      style: TextStyle(
+                                          color: Colors.white,
+                                          fontWeight: FontWeight.bold),
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                      // PROFESSIONAL CLOSE BUTTON
+                      Positioned(
+                        top: 12,
+                        right: 12,
+                        child: GestureDetector(
+                          onTap: () => Navigator.pop(context),
+                          child: Container(
+                            padding: const EdgeInsets.all(6),
+                            decoration: BoxDecoration(
+                              color: Colors.black.withOpacity(0.3),
+                              shape: BoxShape.circle,
+                            ),
+                            child: const Icon(
+                              LucideIcons.x,
+                              color: Colors.white,
+                              size: 18,
+                            ),
                           ),
                         ),
-                        Icon(LucideIcons.chevron_right,
-                            color: Colors.grey[300]),
-                      ],
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-
-  void _showEventDetail(Map<String, dynamic> event) {
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      builder: (context) => Container(
-        padding: const EdgeInsets.all(32),
-        decoration: const BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.vertical(top: Radius.circular(32))),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Center(
-                child: Container(
-                    width: 50,
-                    height: 5,
-                    decoration: BoxDecoration(
-                        color: Colors.grey[200],
-                        borderRadius: BorderRadius.circular(10)))),
-            const SizedBox(height: 24),
-            Text(event['title'],
-                style:
-                    const TextStyle(fontSize: 28, fontWeight: FontWeight.w900)),
-            const SizedBox(height: 16),
-            _detailRow(LucideIcons.map_pin, event['location']),
-            _detailRow(LucideIcons.clock, event['time']),
-            const SizedBox(height: 16),
-            Text(event['desc'],
-                style: TextStyle(
-                    color: Colors.grey[700], fontSize: 16, height: 1.5)),
-            const SizedBox(height: 32),
-
-            // --- UPDATED REGISTRATION BUTTON SECTION ---
-            Center(
-              child: SizedBox(
-                width: MediaQuery.of(context).size.width * 0.6, // Reduced width
-                child: ElevatedButton(
-                  style: ElevatedButton.styleFrom(
-                      backgroundColor: primaryBlue,
-                      foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(vertical: 18),
-                      elevation: 4,
-                      shadowColor: primaryBlue.withOpacity(0.3),
-                      shape: RoundedRectangleBorder(
-                          borderRadius:
-                              BorderRadius.circular(30))), // Pill shape
-                  onPressed: () {
-                    Navigator.pop(context); // Close detail modal
-                    Navigator.pushNamed(context, '/event-register');
-                  },
-                  child: const Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(LucideIcons.user_plus, size: 20),
-                      SizedBox(width: 10),
-                      Text("Register Now",
-                          style: TextStyle(
-                              fontSize: 16, fontWeight: FontWeight.bold)),
+                      ),
                     ],
                   ),
                 ),
               ),
             ),
-            const SizedBox(height: 10), // Bottom padding for elegance
-          ],
-        ),
-      ),
+          ),
+        );
+      },
     );
-  }
-
-  Widget _detailRow(IconData icon, String text) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 8),
-      child: Row(children: [
-        Icon(icon, size: 18, color: primaryBlue),
-        const SizedBox(width: 12),
-        Text(text, style: const TextStyle(fontWeight: FontWeight.w500))
-      ]),
-    );
-  }
-
-  Widget _buildDynamicIcon(bool isLive) {
-    return isLive
-        ? ScaleTransition(
-            scale: Tween(begin: 1.0, end: 1.15).animate(CurvedAnimation(
-                parent: _pulseController, curve: Curves.easeInOut)),
-            child: Container(
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                    color: accentOrange.withOpacity(0.1),
-                    shape: BoxShape.circle),
-                child: Icon(LucideIcons.radio, color: accentOrange, size: 24)),
-          )
-        : Container(
-            padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(
-                color: primaryBlue.withOpacity(0.05), shape: BoxShape.circle),
-            child: Icon(LucideIcons.calendar, color: primaryBlue, size: 24));
   }
 }
