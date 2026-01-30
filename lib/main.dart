@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:flutter_web_plugins/url_strategy.dart'; // REQUIRED for clean URLs
 
 // SHARED WIDGETS
-import 'package:celz5_app/views/shared/church_sidebar.dart';
 import 'package:celz5_app/views/shared/church_webview.dart';
+import 'package:celz5_app/views/home/bottom_navbar.dart';
+import 'package:celz5_app/views/shared/social_floating_menu.dart';
 
 // VIEW IMPORTS
 import 'package:celz5_app/views/home_view.dart';
@@ -17,11 +19,14 @@ import 'package:celz5_app/views/login_view.dart' as auth;
 import 'package:celz5_app/views/register_view.dart';
 import 'package:celz5_app/views/profile_view.dart';
 import 'package:celz5_app/views/event_register_view.dart';
-// If you have a physical file for contacts, import it here:
-// import 'package:celz5_app/views/contacts_view.dart';
+
+// ADMIN IMPORT
+import 'package:celz5_app/views/admin/admin_dashboard.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
+  // Call this BEFORE runApp to enable clean URLs like localhost:8080/admin
+  usePathUrlStrategy();
   runApp(const Celz5App());
 }
 
@@ -31,7 +36,7 @@ class Celz5App extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'CELZ5 Portal',
+      title: 'CELZ5 Admin Portal',
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
         useMaterial3: true,
@@ -39,9 +44,15 @@ class Celz5App extends StatelessWidget {
         textTheme: GoogleFonts.interTextTheme(ThemeData.light().textTheme),
         scaffoldBackgroundColor: const Color(0xFFF8FAFC),
       ),
-      initialRoute: '/home',
+      // Setting initialRoute to '/' makes the AdminDashboard the first thing seen.
+      initialRoute: '/',
       routes: {
-        // CONTENT ROUTES
+        // Root path now loads AdminDashboard
+        '/': (context) => const AdminDashboard(),
+        '/admin': (context) => const AdminDashboard(),
+
+        // Mobile/Member routes
+        '/dashboard': (context) => const DashboardShell(),
         '/home': (context) => const HomeView(),
         '/about': (context) => const AboutView(),
         '/testimonies': (context) => const TestimonyView(),
@@ -55,11 +66,8 @@ class Celz5App extends StatelessWidget {
               url: "https://kingsch.at",
               title: "Contact Us",
             ),
-
-        // AUTH & SHELL ROUTES (Placed last as requested)
-        '/login': (context) => auth.LoginView(),
+        '/login_view': (context) => const auth.LoginView(),
         '/register': (context) => const RegisterView(),
-        '/dashboard': (context) => const DashboardShell(),
       },
     );
   }
@@ -75,8 +83,6 @@ class DashboardShell extends StatefulWidget {
 class _DashboardShellState extends State<DashboardShell> {
   int _currentIndex = 0;
 
-  // FIX 1 & 2: Removed 'const' from the list and used real instances
-  // This list now perfectly matches the index of your Sidebar
   final List<Widget> _pages = [
     const HomeView(), // Index 0
     const AboutView(), // Index 1
@@ -84,7 +90,6 @@ class _DashboardShellState extends State<DashboardShell> {
     const EventView(), // Index 3
     const BlogView(), // Index 4
     const HigherLifeArchiveApp(), // Index 5
-    // FIX 3: Using the WebView for Contacts as intended
     const ChurchWebView(
       url: "https://kingsch.at",
       title: "Contact Us / KingsChat",
@@ -96,58 +101,18 @@ class _DashboardShellState extends State<DashboardShell> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Row(
-        children: [
-          ChurchSidebar(
-            selectedIndex: _currentIndex,
-            onItemSelected: (index) {
-              if (index == 9) {
-                _handleLogout(context);
-              } else if (index >= 0 && index < _pages.length) {
-                setState(() => _currentIndex = index);
-              }
-            },
-          ),
-          Expanded(
-            child: Container(
-              color: Colors.white,
-              // The IndexedStack ensures that when you switch tabs,
-              // the state (like a video playing) is preserved.
-              child: IndexedStack(
-                index: _currentIndex,
-                children: _pages,
-              ),
-            ),
-          ),
-        ],
+      body: IndexedStack(
+        index: _currentIndex,
+        children: _pages,
       ),
-    );
-  }
-
-  void _handleLogout(BuildContext context) {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        title: const Text("Logout"),
-        content: const Text("Are you sure you want to sign out of the portal?"),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text("Cancel"),
-          ),
-          ElevatedButton(
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.redAccent,
-              foregroundColor: Colors.white,
-            ),
-            onPressed: () {
-              Navigator.of(context)
-                  .pushNamedAndRemoveUntil('/login', (route) => false);
-            },
-            child: const Text("Logout"),
-          ),
-        ],
+      floatingActionButton: const SocialFloatingMenu(),
+      bottomNavigationBar: ScrollingBottomNavbar(
+        currentIndex: _currentIndex,
+        onTap: (index) {
+          setState(() {
+            _currentIndex = index;
+          });
+        },
       ),
     );
   }

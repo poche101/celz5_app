@@ -9,7 +9,7 @@ class TestimonyService {
   TestimonyService({this.authToken});
 
   // 1. Fetch Feed (Publicly available)
-  Future<List<Testimony>> fetchTestimonies() async {
+  Future<List<TestimonyModel>> fetchTestimonies() async {
     try {
       final response = await http.get(
         Uri.parse(ApiConstants.testimonies),
@@ -23,7 +23,7 @@ class TestimonyService {
         final decoded = json.decode(response.body);
         // Laravel API Resources wrap data in a 'data' key
         List data = decoded['data'] ?? [];
-        return data.map((item) => Testimony.fromJson(item)).toList();
+        return data.map((item) => TestimonyModel.fromJson(item)).toList();
       } else {
         throw Exception('Failed to load testimonies');
       }

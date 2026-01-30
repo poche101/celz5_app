@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
-import 'package:celz5_app/views/shared/footer.dart'; // Ensure correct import path
 
 class AboutView extends StatelessWidget {
   const AboutView({super.key});
@@ -9,8 +8,7 @@ class AboutView extends StatelessWidget {
   final Color primaryBlue = const Color(0xFF0D47A1);
   final Color accentOrange = Colors.orangeAccent;
 
-  // External image link for the introduction section
-  final String pastorChrisImageUrl = "assets/images/p-chris.webp";
+  final String pastorChrisImageUrl = "/assets/images/p-chris.webp";
 
   @override
   Widget build(BuildContext context) {
@@ -19,21 +17,15 @@ class AboutView extends StatelessWidget {
       body: SingleChildScrollView(
         child: Column(
           children: [
-            // --- Elegant Header Banner ---
             _buildHeader(context),
-
             Padding(
-              padding: const EdgeInsets.symmetric(vertical: 48.0),
+              padding: const EdgeInsets.symmetric(vertical: 40.0),
               child: Column(
                 children: [
-                  // --- Introduction Section (Split Layout) ---
                   _buildResponsiveIntro(context),
-
                   const SizedBox(height: 60),
-
-                  // --- Vision & Purpose Grid ---
                   Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 24.0),
+                    padding: const EdgeInsets.symmetric(horizontal: 20.0),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
@@ -43,25 +35,19 @@ class AboutView extends StatelessWidget {
                           icon: LucideIcons.eye,
                           title: "Our Vision",
                           description:
-                              "Christ Embassy is not just a local assembly; it’s a vision. The Lord has called us to fulfill a very definite purpose, which is to take His divine presence to the peoples and nations of the world.",
+                              "Christ Embassy is not just a local assembly; it’s a vision. To take His divine presence to the nations of the world.",
                         ),
                         _buildFeatureCard(
                           icon: LucideIcons.church,
                           title: "More Than A Church",
                           description:
-                              "When you come to Christ Embassy, you become part of something that’s more than a church; you become part of a great vision, God’s vision.",
+                              "You become part of something that’s more than a church; you become part of a great vision, God’s vision.",
                         ),
                         _buildFeatureCard(
                           icon: LucideIcons.sparkles,
                           title: "Giving Your Life Meaning",
                           description:
-                              "You will hear that one Word from God that would bless you in a special way and revolutionize your life forever. More blessings will be established in your life.",
-                        ),
-                        _buildFeatureCard(
-                          icon: LucideIcons.globe,
-                          title: "Kingdom Advancers",
-                          description:
-                              "The Lord has called us to do big things for His Kingdom. Join us and let’s serve Him together, blessing the nations of the world.",
+                              "One Word from God will revolutionize your life forever. More blessings will be established in your life.",
                         ),
                       ],
                     ),
@@ -69,93 +55,16 @@ class AboutView extends StatelessWidget {
                 ],
               ),
             ),
-
-            // --- Footer ---
-            const CelzFooter(),
           ],
         ),
       ),
     );
   }
 
-  Widget _buildResponsiveIntro(BuildContext context) {
-    final bool isMobile = MediaQuery.of(context).size.width < 800;
-
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 24.0),
-      child: isMobile
-          ? Column(
-              children: [
-                _buildIntroImage(),
-                const SizedBox(height: 32),
-                _buildIntroContent(),
-              ],
-            )
-          : Row(
-              crossAxisAlignment: CrossAxisAlignment.center,
-              children: [
-                Expanded(flex: 2, child: _buildIntroImage()),
-                const SizedBox(width: 48),
-                Expanded(flex: 3, child: _buildIntroContent()),
-              ],
-            ),
-    );
-  }
-
-  Widget _buildIntroImage() {
-    return Container(
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(30),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.1),
-            blurRadius: 30,
-            offset: const Offset(0, 15),
-          ),
-        ],
-      ),
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(30),
-        child: Image.network(
-          pastorChrisImageUrl,
-          fit: BoxFit.cover,
-          loadingBuilder: (context, child, loadingProgress) {
-            if (loadingProgress == null) return child;
-            return Container(
-              height: 300,
-              color: Colors.grey[200],
-              child: const Center(child: CircularProgressIndicator()),
-            );
-          },
-          errorBuilder: (context, error, stackTrace) => Container(
-            height: 300,
-            color: Colors.grey[300],
-            child: const Icon(LucideIcons.image_off, color: Colors.grey),
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildIntroContent() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        _buildSectionHeader("Who We Are"),
-        const SizedBox(height: 16),
-        _buildIntroText(
-            "LoveWorld Incorporated, (a.k.a Christ Embassy) is a global ministry with a vision of taking God’s divine presence to the nations of the world and to demonstrate the character of the Holy Spirit."),
-        const SizedBox(height: 16),
-        _buildIntroText(
-            "This is achieved through every available means, as the Ministry is driven by a passion to see men and women all over the world, come to the knowledge of the divine life made available in Christ Jesus."),
-      ],
-    );
-  }
-
   Widget _buildHeader(BuildContext context) {
     return Container(
       width: double.infinity,
-      height: 300,
+      height: 260, // Slightly taller to accommodate the two-part underline
       decoration: BoxDecoration(
         gradient: LinearGradient(
           begin: Alignment.topLeft,
@@ -170,10 +79,10 @@ class AboutView extends StatelessWidget {
       child: Stack(
         children: [
           Positioned(
-            right: -50,
-            top: -20,
+            right: -40,
+            top: -10,
             child: Icon(LucideIcons.landmark,
-                size: 280, color: Colors.white.withOpacity(0.05)),
+                size: 200, color: Colors.white.withOpacity(0.04)),
           ),
           SafeArea(
             child: Column(
@@ -182,12 +91,11 @@ class AboutView extends StatelessWidget {
                 Padding(
                   padding: const EdgeInsets.all(16.0),
                   child: IconButton(
-                    onPressed: () =>
-                        Navigator.pushReplacementNamed(context, '/home'),
-                    icon:
-                        const Icon(LucideIcons.arrow_left, color: Colors.white),
+                    onPressed: () => Navigator.pop(context),
+                    icon: const Icon(LucideIcons.arrow_left,
+                        color: Colors.white, size: 24),
                     style: IconButton.styleFrom(
-                      backgroundColor: Colors.white.withOpacity(0.1),
+                      backgroundColor: Colors.white.withOpacity(0.15),
                       shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(12)),
                     ),
@@ -195,7 +103,7 @@ class AboutView extends StatelessWidget {
                 ),
                 const Spacer(),
                 Padding(
-                  padding: const EdgeInsets.fromLTRB(32, 0, 32, 48),
+                  padding: const EdgeInsets.fromLTRB(24, 0, 24, 40),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
@@ -203,16 +111,18 @@ class AboutView extends StatelessWidget {
                         "About Us",
                         style: TextStyle(
                           color: Colors.white,
-                          fontSize: 42,
+                          fontSize: 34,
                           fontWeight: FontWeight.w900,
+                          letterSpacing: -0.5,
                         ),
                       ),
-                      const SizedBox(height: 8),
+                      const SizedBox(height: 12),
+                      // --- TWO PART UNDERLINE ---
                       Row(
                         children: [
                           Container(
-                            width: 80,
-                            height: 6,
+                            width: 60,
+                            height: 5,
                             decoration: BoxDecoration(
                               color: accentOrange,
                               borderRadius: BorderRadius.circular(10),
@@ -220,10 +130,10 @@ class AboutView extends StatelessWidget {
                           ),
                           const SizedBox(width: 8),
                           Container(
-                            width: 20,
-                            height: 6,
+                            width: 15,
+                            height: 5,
                             decoration: BoxDecoration(
-                              color: accentOrange,
+                              color: accentOrange.withOpacity(0.5),
                               borderRadius: BorderRadius.circular(10),
                             ),
                           ),
@@ -240,28 +150,69 @@ class AboutView extends StatelessWidget {
     );
   }
 
-  Widget _buildSectionHeader(String title) {
-    return Text(
-      title.toUpperCase(),
-      style: TextStyle(
-        fontSize: 14,
-        letterSpacing: 2,
-        fontWeight: FontWeight.w800,
-        color: primaryBlue,
+  Widget _buildResponsiveIntro(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 24.0),
+      child: Column(children: [
+        _buildIntroImage(),
+        const SizedBox(height: 32),
+        _buildIntroContent()
+      ]),
+    );
+  }
+
+  Widget _buildIntroImage() {
+    return Container(
+      height: 380, // Increased height from 300 to 380
+      width: double.infinity,
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(28),
+        boxShadow: [
+          BoxShadow(
+              color: Colors.black.withOpacity(0.1),
+              blurRadius: 25,
+              offset: const Offset(0, 12))
+        ],
+      ),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(28),
+        child: Image.network(pastorChrisImageUrl,
+            fit: BoxFit.cover,
+            errorBuilder: (context, error, stackTrace) => Container(
+                color: Colors.grey[300],
+                child: const Icon(LucideIcons.image_off, size: 40))),
       ),
     );
   }
 
+  Widget _buildIntroContent() {
+    return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+      _buildSectionHeader("Who We Are"),
+      const SizedBox(height: 16),
+      _buildIntroText(
+          "LoveWorld Incorporated, (a.k.a Christ Embassy) is a global ministry with a vision of taking God’s divine presence to the nations."),
+      const SizedBox(height: 16),
+      _buildIntroText(
+          "This is achieved through every available means, driven by a passion to see men and women come to the knowledge of the divine life."),
+    ]);
+  }
+
+  Widget _buildSectionHeader(String title) {
+    return Text(title.toUpperCase(),
+        style: TextStyle(
+            fontSize: 14,
+            letterSpacing: 2,
+            fontWeight: FontWeight.w900,
+            color: primaryBlue));
+  }
+
   Widget _buildIntroText(String text) {
-    return Text(
-      text,
-      style: const TextStyle(
-        fontSize: 16,
-        height: 1.6,
-        color: Color(0xFF334155),
-        fontWeight: FontWeight.w500,
-      ),
-    );
+    return Text(text,
+        style: const TextStyle(
+            fontSize: 16,
+            height: 1.5,
+            color: Color(0xFF334155),
+            fontWeight: FontWeight.w400));
   }
 
   Widget _buildFeatureCard(
@@ -269,58 +220,35 @@ class AboutView extends StatelessWidget {
       required String title,
       required String description}) {
     return Container(
-      margin: const EdgeInsets.only(bottom: 20),
-      padding: const EdgeInsets.all(24),
+      margin: const EdgeInsets.only(bottom: 16),
+      padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(24),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.03),
-            blurRadius: 20,
-            offset: const Offset(0, 10),
-          ),
-        ],
-        border: Border.all(color: const Color(0xFFF1F5F9)),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: const Color(0xFFF1F5F9), width: 1),
       ),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Container(
+      child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        Container(
             padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
-              color: primaryBlue.withOpacity(0.05),
-              borderRadius: BorderRadius.circular(16),
-            ),
-            child: Icon(icon, color: primaryBlue, size: 28),
-          ),
-          const SizedBox(width: 20),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  title,
-                  style: const TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.w800,
-                    color: Color(0xFF0F172A),
-                  ),
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  description,
-                  style: const TextStyle(
-                    fontSize: 14,
-                    height: 1.5,
-                    color: Color(0xFF64748B),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
+                color: primaryBlue.withOpacity(0.08),
+                borderRadius: BorderRadius.circular(12)),
+            child: Icon(icon, color: primaryBlue, size: 24)),
+        const SizedBox(width: 16),
+        Expanded(
+            child:
+                Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+          Text(title,
+              style: const TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                  color: Color(0xFF0F172A))),
+          const SizedBox(height: 8),
+          Text(description,
+              style: const TextStyle(
+                  fontSize: 14, height: 1.4, color: Color(0xFF64748B))),
+        ])),
+      ]),
     );
   }
 }

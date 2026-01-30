@@ -7,20 +7,27 @@ environment:
   sdk: ^3.4.0
 
 dependencies:
+  # Core SDK packages (must come first)
   flutter:
     sdk: flutter
-  google_fonts: ^6.2.1
-  qr_flutter: ^4.1.0
-  video_player: ^2.8.1
-  flutter_lucide: ^1.8.2
-  intl: ^0.20.2
-  cupertino_icons: ^1.0.8
-  youtube_player_flutter: ^9.1.1
-  file_picker: ^8.1.0
-  http: ^1.6.0
-  shared_preferences: ^2.5.4
+  flutter_web_plugins:
+    sdk: flutter
+
+  # Third-party packages (alphabetized)
   chewie: ^1.7.5
+  cupertino_icons: ^1.0.8
+  file_picker: ^8.1.0
+  flutter_lucide: ^1.8.2
+  google_fonts: ^6.2.1
+  http: ^1.6.0
+  intl: ^0.20.2
+  path_provider: ^2.1.5
+  qr_flutter: ^4.1.0
+  shared_preferences: ^2.5.4
   url_launcher: ^6.3.0
+  video_player: ^2.8.1
+  youtube_player_flutter: ^9.1.1
+
   
 
 

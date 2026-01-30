@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
-// TODO: Ensure you import your AuthController or wherever your login function is located
-// import 'package:celz5_app/controllers/auth_controller.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:http/http.dart' as http; // Added for API
+import 'dart:convert'; // Added for JSON parsing
 
 class LoginView extends StatefulWidget {
   const LoginView({super.key});
@@ -24,7 +25,6 @@ class _LoginViewState extends State<LoginView> {
     super.dispose();
   }
 
-  /// UPDATED: Logic to use your login controller
   Future<void> _handleLogin() async {
     final String email = _emailController.text.trim();
     final String password = _passwordController.text.trim();
@@ -39,16 +39,19 @@ class _LoginViewState extends State<LoginView> {
     setState(() => _isLoading = true);
 
     try {
-      // Assuming 'login' is a static method in an AuthController or instance
-      // Replace 'AuthController()' with your actual service/controller instance
       final result = await login(email, password);
 
       if (mounted) {
         if (result['success'] == true) {
-          // Success: Navigate to dashboard
+          // Store actual token from API
+          final prefs = await SharedPreferences.getInstance();
+          await prefs.setString('auth_token', result['token'] ?? '');
+
+          // Optional: Store user data if returned
+          // await prefs.setString('user_data', json.encode(result['user']));
+
           Navigator.pushReplacementNamed(context, '/dashboard');
         } else {
-          // Failure: Show error message from controller
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text(result['message'] ?? "Login failed"),
@@ -57,6 +60,14 @@ class _LoginViewState extends State<LoginView> {
           );
         }
       }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+              content:
+                  Text("An unexpected error occurred. Check your connection.")),
+        );
+      }
     } finally {
       if (mounted) {
         setState(() => _isLoading = false);
@@ -64,15 +75,47 @@ class _LoginViewState extends State<LoginView> {
     }
   }
 
-  // NOTE: Your provided login controller logic for reference
+  /// UPDATED: API Integration Logic
   Future<Map<String, dynamic>> login(String email, String password) async {
-    // This is the implementation you provided
-    // try { ... http.post ... }
-    // return {'success': false, 'message': 'Demo mode: Replace with actual call'};
+    // Replace with your actual endpoint
+    final url = Uri.parse('https://your-api-domain.com/api/login');
 
-    // For now, I'm simulating a call to your backend
-    await Future.delayed(const Duration(seconds: 1));
-    return {'success': true};
+    try {
+      final response = await http
+          .post(
+            url,
+            headers: {
+              'Content-Type': 'application/json',
+              'Accept': 'application/json',
+            },
+            body: json.encode({
+              'email': email,
+              'password': password,
+            }),
+          )
+          .timeout(const Duration(seconds: 15)); // Added timeout for better UX
+
+      final Map<String, dynamic> responseData = json.decode(response.body);
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        return {
+          'success': true,
+          'token':
+              responseData['token'], // Adjust key based on your API response
+          'user': responseData['user'],
+        };
+      } else {
+        return {
+          'success': false,
+          'message': responseData['message'] ?? 'Invalid credentials',
+        };
+      }
+    } catch (e) {
+      return {
+        'success': false,
+        'message': 'Server error. Please try again later.',
+      };
+    }
   }
 
   @override
@@ -83,29 +126,22 @@ class _LoginViewState extends State<LoginView> {
       backgroundColor: const Color(0xFFF3F4F6),
       body: Stack(
         children: [
-          // --- EXTERNAL BACK BUTTON ---
+          // --- BACK BUTTON ---
           Positioned(
             top: 40,
-            left: 20,
-            child: MouseRegion(
-              cursor: SystemMouseCursors.click,
-              child: IconButton(
-                onPressed: () => Navigator.pushNamedAndRemoveUntil(
-                  context,
-                  '/home',
-                  (route) => false,
-                ),
-                icon: const Icon(LucideIcons.arrow_left,
-                    size: 24, color: Color(0xFF0A192F)),
-              ),
+            left: 10,
+            child: IconButton(
+              onPressed: () => Navigator.pop(context),
+              icon: const Icon(LucideIcons.arrow_left,
+                  size: 24, color: Color(0xFF0A192F)),
             ),
           ),
 
           Center(
             child: SingleChildScrollView(
-              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 80),
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 60),
               child: Container(
-                constraints: BoxConstraints(maxWidth: isWideScreen ? 850 : 420),
+                constraints: BoxConstraints(maxWidth: isWideScreen ? 850 : 400),
                 decoration: BoxDecoration(
                   color: Colors.white,
                   borderRadius: BorderRadius.circular(24),
@@ -123,12 +159,11 @@ class _LoginViewState extends State<LoginView> {
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      // --- BLUE BRANDING SECTION ---
+                      // --- BRANDING SECTION ---
                       Flexible(
                         flex: isWideScreen ? 4 : 0,
                         child: Container(
-                          constraints:
-                              BoxConstraints(minHeight: isWideScreen ? 0 : 220),
+                          padding: const EdgeInsets.all(32),
                           decoration: BoxDecoration(
                             color: const Color(0xFF0A192F),
                             borderRadius: isWideScreen
@@ -139,28 +174,31 @@ class _LoginViewState extends State<LoginView> {
                                     topLeft: Radius.circular(24),
                                     topRight: Radius.circular(24)),
                           ),
-                          padding: const EdgeInsets.all(32),
                           child: Column(
                             mainAxisAlignment: MainAxisAlignment.center,
-                            crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              // Use an icon if image is missing
-                              const Icon(LucideIcons.church,
-                                  size: 48, color: Color(0xFFEAB308)),
-                              const SizedBox(height: 20),
+                              Image.asset(
+                                'assets/images/logo.png',
+                                height: 80,
+                                errorBuilder: (context, error, stackTrace) =>
+                                    const Icon(LucideIcons.church,
+                                        size: 60, color: Color(0xFFEAB308)),
+                              ),
+                              const SizedBox(height: 24),
                               const Text(
                                 "Christ Embassy",
                                 style: TextStyle(
                                     color: Colors.white,
-                                    fontSize: 22,
-                                    fontWeight: FontWeight.w900),
+                                    fontSize: 20,
+                                    fontWeight: FontWeight.bold),
                               ),
-                              const SizedBox(height: 10),
+                              const SizedBox(height: 8),
                               Text(
-                                "Giving your life a meaning. Welcome back to the CELZ5 Portal.",
+                                "Giving your life a meaning.",
+                                textAlign: TextAlign.center,
                                 style: TextStyle(
-                                    color: Colors.white.withOpacity(0.6),
-                                    fontSize: 13,
+                                    color: Colors.white.withOpacity(0.7),
+                                    fontSize: 14,
                                     height: 1.4),
                               ),
                             ],
@@ -172,16 +210,15 @@ class _LoginViewState extends State<LoginView> {
                       Flexible(
                         flex: isWideScreen ? 6 : 0,
                         child: Padding(
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 32, vertical: 40),
+                          padding: const EdgeInsets.all(32),
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               const Text(
                                 "Sign In",
                                 style: TextStyle(
-                                    fontSize: 22,
-                                    fontWeight: FontWeight.w800,
+                                    fontSize: 24,
+                                    fontWeight: FontWeight.bold,
                                     color: Color(0xFF0A192F)),
                               ),
                               const SizedBox(height: 24),
@@ -194,8 +231,8 @@ class _LoginViewState extends State<LoginView> {
                               const SizedBox(height: 24),
                               _buildDivider(),
                               const SizedBox(height: 24),
-                              _buildField("Email Address", "email@example.com",
-                                  LucideIcons.mail,
+                              _buildField(
+                                  "Email", "Enter your email", LucideIcons.mail,
                                   controller: _emailController),
                               const SizedBox(height: 16),
                               _buildField(
@@ -205,7 +242,7 @@ class _LoginViewState extends State<LoginView> {
                               const SizedBox(height: 32),
                               SizedBox(
                                 width: double.infinity,
-                                height: 52,
+                                height: 50,
                                 child: ElevatedButton(
                                   style: ElevatedButton.styleFrom(
                                     backgroundColor: const Color(0xFF0A192F),
@@ -213,7 +250,6 @@ class _LoginViewState extends State<LoginView> {
                                     shape: RoundedRectangleBorder(
                                         borderRadius:
                                             BorderRadius.circular(12)),
-                                    elevation: 0,
                                   ),
                                   onPressed: _isLoading ? null : _handleLogin,
                                   child: _isLoading
@@ -226,28 +262,26 @@ class _LoginViewState extends State<LoginView> {
                                       : const Text("Sign In",
                                           style: TextStyle(
                                               fontSize: 16,
-                                              fontWeight: FontWeight.bold)),
+                                              fontWeight: FontWeight.w600)),
                                 ),
                               ),
-                              const SizedBox(height: 20),
-                              Center(
-                                child: Wrap(
-                                  alignment: WrapAlignment.center,
-                                  children: [
-                                    const Text("Don't have an account?",
+                              const SizedBox(height: 24),
+                              Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  const Text("New here?",
+                                      style: TextStyle(
+                                          color: Colors.grey, fontSize: 14)),
+                                  TextButton(
+                                    onPressed: () => Navigator.pushNamed(
+                                        context, '/register'),
+                                    child: const Text("Create Account",
                                         style: TextStyle(
-                                            color: Colors.grey, fontSize: 13)),
-                                    GestureDetector(
-                                      onTap: () => Navigator.pushNamed(
-                                          context, '/register'),
-                                      child: const Text(" Create Account",
-                                          style: TextStyle(
-                                              color: Color(0xFF0A192F),
-                                              fontWeight: FontWeight.bold,
-                                              fontSize: 13)),
-                                    ),
-                                  ],
-                                ),
+                                            color: Color(0xFF0A192F),
+                                            fontWeight: FontWeight.bold,
+                                            fontSize: 14)),
+                                  ),
+                                ],
                               ),
                             ],
                           ),
@@ -264,22 +298,15 @@ class _LoginViewState extends State<LoginView> {
     );
   }
 
-  // --- REUSABLE HELPERS ---
-
   Widget _buildDivider() {
     return Row(
       children: [
-        Expanded(child: Divider(color: Colors.grey[200])),
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16),
-          child: Text("OR EMAIL",
-              style: TextStyle(
-                  color: Colors.grey[400],
-                  fontSize: 10,
-                  fontWeight: FontWeight.w600,
-                  letterSpacing: 1)),
+        Expanded(child: Divider(color: Colors.grey[300])),
+        const Padding(
+          padding: EdgeInsets.symmetric(horizontal: 12),
+          child: Text("OR", style: TextStyle(color: Colors.grey, fontSize: 12)),
         ),
-        Expanded(child: Divider(color: Colors.grey[200])),
+        Expanded(child: Divider(color: Colors.grey[300])),
       ],
     );
   }
@@ -291,14 +318,13 @@ class _LoginViewState extends State<LoginView> {
       required VoidCallback onPressed}) {
     return SizedBox(
       width: double.infinity,
-      height: 52,
+      height: 48,
       child: OutlinedButton.icon(
-        icon: Icon(icon, size: 20),
-        label: Text(label,
-            style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14)),
+        icon: Icon(icon, size: 18),
+        label: Text(label, style: const TextStyle(fontSize: 14)),
         style: OutlinedButton.styleFrom(
           foregroundColor: color,
-          side: BorderSide(color: color.withOpacity(0.15), width: 1.5),
+          side: BorderSide(color: color.withOpacity(0.2)),
           shape:
               RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
         ),
@@ -314,38 +340,39 @@ class _LoginViewState extends State<LoginView> {
       children: [
         Text(label,
             style: const TextStyle(
-                fontSize: 12,
-                fontWeight: FontWeight.bold,
-                color: Color(0xFF4B5563))),
-        const SizedBox(height: 6),
+                fontSize: 14,
+                fontWeight: FontWeight.w600,
+                color: Color(0xFF374151))),
+        const SizedBox(height: 8),
         TextField(
           controller: controller,
           obscureText: isPassword ? _obscurePassword : false,
-          style: const TextStyle(fontSize: 14),
           decoration: InputDecoration(
             hintText: hint,
-            prefixIcon: Icon(icon, size: 16, color: Colors.grey[400]),
+            hintStyle: TextStyle(color: Colors.grey[400], fontSize: 14),
+            prefixIcon: Icon(icon, size: 18, color: Colors.grey[500]),
             suffixIcon: isPassword
                 ? IconButton(
                     icon: Icon(
                         _obscurePassword
                             ? LucideIcons.eye_off
                             : LucideIcons.eye,
-                        size: 16),
+                        size: 18),
                     onPressed: () =>
                         setState(() => _obscurePassword = !_obscurePassword),
                   )
                 : null,
             filled: true,
             fillColor: const Color(0xFFF9FAFB),
+            contentPadding: const EdgeInsets.symmetric(horizontal: 16),
             border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(10),
-                borderSide: BorderSide.none),
+                borderRadius: BorderRadius.circular(12),
+                borderSide: BorderSide(color: Colors.grey.shade200)),
             enabledBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(10),
-                borderSide: BorderSide(color: Colors.grey.shade100)),
+                borderRadius: BorderRadius.circular(12),
+                borderSide: BorderSide(color: Colors.grey.shade200)),
             focusedBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(10),
+                borderRadius: BorderRadius.circular(12),
                 borderSide: const BorderSide(color: Color(0xFF0A192F))),
           ),
         ),

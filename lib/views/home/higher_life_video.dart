@@ -17,7 +17,6 @@ class _HigherLifeVideoSectionState extends State<HigherLifeVideoSection> {
   @override
   void initState() {
     super.initState();
-    // Using networkUrl for better performance/compatibility
     _controller = VideoPlayerController.networkUrl(
       Uri.parse(
           "https://s3.eu-west-2.amazonaws.com/lodams-videoshare/videos/h-life15_601699fe3ccc7b0007cbc451.mp4"),
@@ -25,13 +24,12 @@ class _HigherLifeVideoSectionState extends State<HigherLifeVideoSection> {
         _controller.setVolume(0);
         _controller.setLooping(true);
         _controller.play();
-        setState(() {}); // Refresh to show the video once initialized
+        setState(() {});
       });
   }
 
   @override
   void dispose() {
-    // CRITICAL: Always dispose controllers to fix memory leaks
     _controller.dispose();
     super.dispose();
   }
@@ -46,54 +44,57 @@ class _HigherLifeVideoSectionState extends State<HigherLifeVideoSection> {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.fromLTRB(24, 8, 24, 32),
+      padding: const EdgeInsets.fromLTRB(24, 20, 24, 32),
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+        crossAxisAlignment:
+            CrossAxisAlignment.center, // Centered the column items
         children: [
-          _buildTextHeader(),
-          const SizedBox(height: 8),
-          _buildAccentLine(),
-          const SizedBox(height: 20),
+          _buildCenteredHeader(),
+          const SizedBox(height: 12),
+          _buildCenteredAccentLine(),
+          const SizedBox(height: 28),
           _buildVideoContainer(),
         ],
       ),
     );
   }
 
-  Widget _buildTextHeader() {
-    return RichText(
-      text: TextSpan(
-        children: [
-          const TextSpan(
-            text: "The Higher Life\n",
-            style: TextStyle(
-              fontSize: 20,
-              fontWeight: FontWeight.w800,
-              color: Color(0xFF0A192F),
-              letterSpacing: -0.5,
-              height: 1.2,
-            ),
+  Widget _buildCenteredHeader() {
+    return Column(
+      children: [
+        const Text(
+          "The Higher Life",
+          textAlign: TextAlign.center,
+          style: TextStyle(
+            fontSize: 24, // Standard Mobile Headline Size
+            fontWeight: FontWeight.w900,
+            color: Color(0xFF0A192F),
+            letterSpacing: -0.5,
+            height: 1.2,
           ),
-          TextSpan(
-            text: "With Pastor Deola Phillips",
-            style: TextStyle(
-              fontSize: 14,
-              fontWeight: FontWeight.w400,
-              fontStyle: FontStyle.italic,
-              color: const Color(0xFF0A192F).withOpacity(0.7),
-            ),
+        ),
+        const SizedBox(height: 4),
+        Text(
+          "With Pastor Deola Phillips",
+          textAlign: TextAlign.center,
+          style: TextStyle(
+            fontSize: 14, // Standard Mobile Body Size
+            fontWeight: FontWeight.w500,
+            color: Colors.grey.shade600,
+            letterSpacing: 0.1,
           ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 
-  Widget _buildAccentLine() {
+  Widget _buildCenteredAccentLine() {
     return Row(
+      mainAxisAlignment: MainAxisAlignment.center, // Center the underline
       children: [
         Container(
-          height: 3,
-          width: 35,
+          height: 4,
+          width: 40,
           decoration: BoxDecoration(
             color: Colors.orangeAccent,
             borderRadius: BorderRadius.circular(10),
@@ -101,10 +102,10 @@ class _HigherLifeVideoSectionState extends State<HigherLifeVideoSection> {
         ),
         const SizedBox(width: 4),
         Container(
-          height: 3,
-          width: 8,
+          height: 4,
+          width: 10,
           decoration: BoxDecoration(
-            color: Colors.orangeAccent.withOpacity(0.3),
+            color: Colors.orangeAccent.withOpacity(0.25),
             borderRadius: BorderRadius.circular(10),
           ),
         ),
@@ -116,20 +117,20 @@ class _HigherLifeVideoSectionState extends State<HigherLifeVideoSection> {
     return GestureDetector(
       onTap: () => setState(() => _showControls = !_showControls),
       child: Container(
-        height: 220,
+        height: 220, // Adjusted for standard mobile aspect ratio comfort
         decoration: BoxDecoration(
           color: Colors.black,
-          borderRadius: BorderRadius.circular(28),
+          borderRadius: BorderRadius.circular(24),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.1),
-              blurRadius: 20,
-              offset: const Offset(0, 10),
+              color: const Color(0xFF0A192F).withOpacity(0.12),
+              blurRadius: 24,
+              offset: const Offset(0, 12),
             )
           ],
         ),
         child: ClipRRect(
-          borderRadius: BorderRadius.circular(28),
+          borderRadius: BorderRadius.circular(24),
           child: Stack(
             alignment: Alignment.center,
             children: [
@@ -141,12 +142,14 @@ class _HigherLifeVideoSectionState extends State<HigherLifeVideoSection> {
                       ),
                     )
                   : const Center(
-                      child:
-                          CircularProgressIndicator(color: Colors.orangeAccent),
+                      child: CircularProgressIndicator(
+                        color: Colors.orangeAccent,
+                        strokeWidth: 2,
+                      ),
                     ),
               Positioned(
-                top: 15,
-                right: 15,
+                top: 16,
+                right: 16,
                 child: _buildMuteButton(),
               ),
               if (_showControls || !_controller.value.isPlaying)
@@ -162,7 +165,7 @@ class _HigherLifeVideoSectionState extends State<HigherLifeVideoSection> {
     return GestureDetector(
       onTap: _toggleMute,
       child: Container(
-        padding: const EdgeInsets.all(8),
+        padding: const EdgeInsets.all(10),
         decoration: BoxDecoration(
           color: Colors.black.withOpacity(0.5),
           shape: BoxShape.circle,
@@ -182,19 +185,25 @@ class _HigherLifeVideoSectionState extends State<HigherLifeVideoSection> {
       child: Stack(
         children: [
           Center(
-            child: IconButton(
-              icon: Icon(
-                _controller.value.isPlaying
-                    ? LucideIcons.pause
-                    : LucideIcons.play,
-                color: Colors.white,
-                size: 44,
+            child: Container(
+              decoration: BoxDecoration(
+                color: Colors.white.withOpacity(0.2),
+                shape: BoxShape.circle,
               ),
-              onPressed: () => setState(() {
-                _controller.value.isPlaying
-                    ? _controller.pause()
-                    : _controller.play();
-              }),
+              child: IconButton(
+                icon: Icon(
+                  _controller.value.isPlaying
+                      ? LucideIcons.pause
+                      : LucideIcons.play,
+                  color: Colors.white,
+                  size: 44,
+                ),
+                onPressed: () => setState(() {
+                  _controller.value.isPlaying
+                      ? _controller.pause()
+                      : _controller.play();
+                }),
+              ),
             ),
           ),
           Positioned(
@@ -209,7 +218,7 @@ class _HigherLifeVideoSectionState extends State<HigherLifeVideoSection> {
                 bufferedColor: Colors.white24,
                 backgroundColor: Colors.white10,
               ),
-              padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 20),
+              padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 20),
             ),
           ),
         ],

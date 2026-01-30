@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'dart:ui';
-import 'dart:async'; // Required for Timer
+import 'dart:async';
 
 class AboutSlider extends StatefulWidget {
   const AboutSlider({super.key});
@@ -10,9 +10,8 @@ class AboutSlider extends StatefulWidget {
 }
 
 class _AboutSliderState extends State<AboutSlider> {
-  // REDUCED WIDTH: Viewport fraction changed from 0.85 to 0.75
   final PageController _aboutPageController =
-      PageController(viewportFraction: 0.75);
+      PageController(viewportFraction: 0.85);
   Timer? _timer;
   int _currentPage = 0;
 
@@ -26,13 +25,13 @@ class _AboutSliderState extends State<AboutSlider> {
     {
       'title': 'WORSHIP WITH US',
       'desc':
-          'Join a congregation of the mighty as we worship God in spirit and truth. You can participate both onsite and online from anywhere in the world.',
+          'Join a congregation of the mighty as we worship God in spirit and truth. Participate onsite and online.',
       'image': 'assets/images/p-dee2.jpeg',
     },
     {
       'title': 'OUR MISSION',
       'desc':
-          'To raise generations of men and women who will come into their inheritance to fulfill God’s dream. To make known and to bring them into their inheritance in Christ.',
+          'To raise generations of men and women who will come into their inheritance to fulfill God’s dream.',
       'image': 'assets/images/p-dee1.jpeg',
     },
   ];
@@ -40,7 +39,6 @@ class _AboutSliderState extends State<AboutSlider> {
   @override
   void initState() {
     super.initState();
-    // Start the auto-slide timer
     _timer = Timer.periodic(const Duration(seconds: 5), (Timer timer) {
       if (_currentPage < aboutData.length - 1) {
         _currentPage++;
@@ -68,86 +66,91 @@ class _AboutSliderState extends State<AboutSlider> {
   @override
   Widget build(BuildContext context) {
     return SizedBox(
-      // ADJUSTED HEIGHT: Reduced from 240 to 220 for better proportions
-      height: 220,
+      height: 260,
       child: PageView.builder(
         controller: _aboutPageController,
         physics: const BouncingScrollPhysics(),
         itemCount: aboutData.length,
-        onPageChanged: (index) {
-          setState(() {
-            _currentPage = index;
-          });
-        },
-        itemBuilder: (context, index) {
-          return _buildSliderCard(aboutData[index]);
-        },
+        onPageChanged: (index) => setState(() => _currentPage = index),
+        itemBuilder: (context, index) => _buildSliderCard(aboutData[index]),
       ),
     );
   }
 
   Widget _buildSliderCard(Map<String, String> data) {
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 8),
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 10),
       child: Container(
         decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(24),
+          borderRadius: BorderRadius.circular(20),
           image: DecorationImage(
             image: AssetImage(data['image']!),
             fit: BoxFit.cover,
           ),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.1),
+              blurRadius: 15,
+              offset: const Offset(0, 5),
+            )
+          ],
         ),
         child: Stack(
           children: [
-            // Dark gradient overlay
-            Container(
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(24),
-                gradient: LinearGradient(
-                  begin: Alignment.topCenter,
-                  end: Alignment.bottomCenter,
-                  colors: [Colors.transparent, Colors.black.withOpacity(0.3)],
+            Positioned.fill(
+              child: Container(
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(20),
+                  gradient: LinearGradient(
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
+                    colors: [
+                      Colors.transparent,
+                      Colors.black.withOpacity(0.3),
+                      Colors.black
+                          .withOpacity(0.75), // Slightly lighter gradient
+                    ],
+                  ),
                 ),
               ),
             ),
-            // The Frosted Glass Text Area
             Positioned(
               bottom: 0,
               left: 0,
               right: 0,
               child: ClipRRect(
                 borderRadius:
-                    const BorderRadius.vertical(bottom: Radius.circular(24)),
+                    const BorderRadius.vertical(bottom: Radius.circular(20)),
                 child: BackdropFilter(
-                  filter: ImageFilter.blur(sigmaX: 12, sigmaY: 12),
+                  filter: ImageFilter.blur(sigmaX: 8, sigmaY: 8),
                   child: Container(
-                    padding: const EdgeInsets.all(16),
+                    padding: const EdgeInsets.fromLTRB(18, 16, 18, 22),
                     decoration: BoxDecoration(
-                      color: Colors.white.withOpacity(0.1),
-                      border: Border(
-                        top: BorderSide(color: Colors.white.withOpacity(0.2)),
-                      ),
+                      color: Colors.black.withOpacity(0.15),
                     ),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       mainAxisSize: MainAxisSize.min,
                       children: [
                         Text(
-                          data['title']!,
-                          style: const TextStyle(
-                            color: Colors.orangeAccent,
-                            fontWeight: FontWeight.w900,
-                            fontSize:
-                                16, // Slightly reduced font size for narrower card
+                          data['title']!.toUpperCase(),
+                          style: TextStyle(
+                            color: Colors.orangeAccent.withOpacity(0.9),
+                            fontWeight: FontWeight.w600, // Lighter than w800
+                            fontSize: 12, // Standard mobile overline
+                            letterSpacing: 1.2,
                           ),
                         ),
-                        const SizedBox(height: 4),
+                        const SizedBox(height: 6),
                         Text(
                           data['desc']!,
                           style: const TextStyle(
-                              color: Colors.white,
-                              fontSize: 11, // Slightly reduced for narrow space
-                              height: 1.3),
+                            color: Colors.white,
+                            fontSize: 14, // Standard mobile body text
+                            fontWeight: FontWeight.w400, // Lighter than w500
+                            height: 1.5,
+                            letterSpacing: 0.2,
+                          ),
                           maxLines: 3,
                           overflow: TextOverflow.ellipsis,
                         ),

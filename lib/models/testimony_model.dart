@@ -1,49 +1,31 @@
-class Testimony {
-  final int id;
+class TestimonyModel {
+  final String id;
+  final String type; // 'video' or 'text'
   final String fullName;
-  final String churchGroup;
   final String content;
-  final String type;
-  final String? videoUrl;
+  final String? church;
   final String? thumbnailUrl;
-  final bool isApproved;
-  final DateTime createdAt;
+  final String? videoUrl;
 
-  Testimony({
+  TestimonyModel({
     required this.id,
-    required this.fullName,
-    required this.churchGroup,
-    required this.content,
     required this.type,
-    this.videoUrl,
+    required this.fullName,
+    required this.content,
+    this.church,
     this.thumbnailUrl,
-    required this.isApproved,
-    required this.createdAt,
+    this.videoUrl,
   });
 
-  factory Testimony.fromJson(Map<String, dynamic> json) {
-    return Testimony(
-      id: json['id'] ?? 0,
-      fullName: json['full_name'] ?? 'Anonymous',
-      churchGroup: json['church_group'] ?? 'General',
-      content: json['content'] ?? '',
+  factory TestimonyModel.fromJson(Map<String, dynamic> json) {
+    return TestimonyModel(
+      id: json['id']?.toString() ?? '',
       type: json['type'] ?? 'text',
-      videoUrl: json['video_url'],
+      fullName: json['full_name'] ?? 'Anonymous',
+      content: json['content'] ?? '',
+      church: json['church'],
       thumbnailUrl: json['thumbnail_url'],
-      // Handles 1/0 from database or true/false from JSON
-      isApproved: json['is_approved'] == 1 || json['is_approved'] == true,
-      createdAt: json['created_at'] != null
-          ? DateTime.parse(json['created_at'])
-          : DateTime.now(),
+      videoUrl: json['video_url'],
     );
-  }
-
-  Map<String, dynamic> toJson() {
-    return {
-      'full_name': fullName,
-      'church_group': churchGroup,
-      'content': content,
-      'type': type,
-    };
   }
 }

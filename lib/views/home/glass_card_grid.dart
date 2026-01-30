@@ -12,13 +12,16 @@ class GlassCardGrid extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.fromLTRB(24, 32, 24, 20),
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
       child: GridView.count(
         shrinkWrap: true,
         physics: const NeverScrollableScrollPhysics(),
-        crossAxisCount: isMobile ? 3 : 6,
-        mainAxisSpacing: 12,
-        crossAxisSpacing: 12,
+        // 2 columns on mobile, 6 on desktop
+        crossAxisCount: isMobile ? 2 : 6,
+        mainAxisSpacing: 16, // Standardized spacing
+        crossAxisSpacing: 16,
+        // Aspect ratio 1.0 makes them perfect squares
+        childAspectRatio: 1.0,
         children: [
           _buildCard(LucideIcons.megaphone, "Testimony", 2),
           _buildCard(LucideIcons.sparkles, "Higher Life", 5),
@@ -34,24 +37,45 @@ class GlassCardGrid extends StatelessWidget {
   Widget _buildCard(IconData icon, String title, int index) {
     return InkWell(
       onTap: () => onItemSelected(index),
+      borderRadius: BorderRadius.circular(24),
       child: ClipRRect(
         borderRadius: BorderRadius.circular(24),
         child: BackdropFilter(
           filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
           child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 16),
             decoration: BoxDecoration(
-              color: Colors.white.withOpacity(0.7),
+              color: Colors.white.withOpacity(0.85),
               borderRadius: BorderRadius.circular(24),
-              border: Border.all(color: Colors.white.withOpacity(0.5)),
+              border: Border.all(
+                color: Colors.white.withOpacity(0.6),
+                width: 1.5,
+              ),
             ),
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Icon(icon, color: Colors.orangeAccent),
-                const SizedBox(height: 8),
-                Text(title,
-                    style: const TextStyle(
-                        fontSize: 11, fontWeight: FontWeight.bold)),
+                Icon(
+                  icon,
+                  color: Colors.orangeAccent,
+                  size: isMobile ? 28 : 24, // Optimized icon sizing
+                ),
+                const SizedBox(height: 10),
+                Text(
+                  title,
+                  textAlign: TextAlign.center,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis, // Better for long titles
+                  style: TextStyle(
+                    // Standard Mobile Grid font size (13-14px)
+                    fontSize: isMobile ? 14 : 13,
+                    fontWeight: FontWeight.w700, // Bold but not overwhelming
+                    color: const Color(
+                        0xFF334155), // Slate 700 for better legibility
+                    letterSpacing: -0.2,
+                    height: 1.2,
+                  ),
+                ),
               ],
             ),
           ),

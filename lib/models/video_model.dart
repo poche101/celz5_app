@@ -1,32 +1,26 @@
 class VideoModel {
-  final int? id;
+  final int id;
   final String title;
-  final int episode;
-  final String duration;
-  final String? description;
+  final String episode;
   final String posterPath;
-  final String videoPath;
+  final String videoUrl;
 
   VideoModel({
-    this.id,
+    required this.id,
     required this.title,
     required this.episode,
-    required this.duration,
-    this.description,
     required this.posterPath,
-    required this.videoPath,
+    required this.videoUrl,
   });
 
+  // This converts the Map from your API/Mock data into a VideoModel object
   factory VideoModel.fromJson(Map<String, dynamic> json) {
     return VideoModel(
-      id: json['id'],
-      title: json['title'] ?? '',
-      episode: json['episode'] ?? 0,
-      duration: json['duration'] ?? '',
-      description: json['description'],
-      // Laravel returns relative paths or full URLs depending on your Model Accessors
-      posterPath: json['poster_path'] ?? '',
-      videoPath: json['video_path'] ?? '',
+      id: json['id'] ?? 0,
+      title: json['title'] ?? 'Unknown Title',
+      episode: json['episode']?.toString() ?? '0',
+      posterPath: json['posterPath'] ?? '',
+      videoUrl: json['videoUrl'] ?? '',
     );
   }
 }

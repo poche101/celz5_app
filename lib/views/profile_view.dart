@@ -6,8 +6,9 @@ import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:qr_flutter/qr_flutter.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:http/http.dart' as http;
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:path_provider/path_provider.dart';
 
-// Mock UserModel - Replace with your actual model file import
 class UserModel {
   final String title, name, email, phone, group, church, cell;
   UserModel({
@@ -41,7 +42,7 @@ class ProfileView extends StatefulWidget {
 class _ProfileViewState extends State<ProfileView> {
   bool _pushNotifications = true;
   bool _darkMode = false;
-  bool _isUpdating = false; // Track loading state
+  bool _isUpdating = false;
   File? _imageFile;
 
   final Map<String, TextEditingController> _controllers = {};
@@ -60,9 +61,29 @@ class _ProfileViewState extends State<ProfileView> {
   @override
   void initState() {
     super.initState();
+    _initializeControllers();
+    _loadPermanentImage();
+  }
+
+  void _initializeControllers() {
     userData.forEach((key, value) {
       _controllers[key] = TextEditingController(text: value);
     });
+  }
+
+  Future<void> _loadPermanentImage() async {
+    final prefs = await SharedPreferences.getInstance();
+    final String? imagePath = prefs.getString('saved_profile_path');
+    if (imagePath != null && File(imagePath).existsSync()) {
+      setState(() {
+        _imageFile = File(imagePath);
+      });
+    }
+  }
+
+  Future<void> _saveImagePermanently(String path) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString('saved_profile_path', path);
   }
 
   @override
@@ -73,59 +94,46 @@ class _ProfileViewState extends State<ProfileView> {
     super.dispose();
   }
 
-  // API Call logic using Multipart for Image support
-  Future<Map<String, dynamic>> _updateProfileApi(
-      UserModel user, String token) async {
-    try {
-      // Use MultipartRequest to handle both JSON fields and the File
-      var request = http.MultipartRequest(
-        'POST',
-        Uri.parse(
-            'https://your-api-url.com/profile/update'), // Replace with ApiConstants.updateProfile
+  // --- LOGIC METHODS ---
+
+  Future<void> _handleLogout() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.remove('auth_token'); // Matches your Navbar key
+
+    if (mounted) {
+      Navigator.of(context).pop(); // Exit ProfileView
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Logged out successfully")),
       );
-
-      request.headers.addAll({
-        'Accept': 'application/json',
-        'Authorization': 'Bearer $token',
-      });
-
-      // Add text fields
-      request.fields['title'] = user.title;
-      request.fields['name'] = user.name;
-      request.fields['email'] = user.email;
-      request.fields['phone'] = user.phone;
-      request.fields['group'] = user.group;
-      request.fields['church'] = user.church;
-      request.fields['cell'] = user.cell;
-
-      // Add image if exists
-      if (_imageFile != null) {
-        request.files.add(await http.MultipartFile.fromPath(
-          'image', // The key your backend expects
-          _imageFile!.path,
-        ));
-      }
-
-      final streamedResponse = await request.send();
-      final response = await http.Response.fromStream(streamedResponse);
-
-      if (response.statusCode == 200) {
-        return {'success': true, 'data': jsonDecode(response.body)};
-      } else {
-        return {
-          'success': false,
-          'message': 'Server error: ${response.statusCode}'
-        };
-      }
-    } catch (e) {
-      return {'success': false, 'message': e.toString()};
     }
+  }
+
+  void _showLogoutConfirmation() {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text("Logout"),
+        content: const Text("Are you sure you want to sign out?"),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text("Cancel"),
+          ),
+          TextButton(
+            onPressed: () {
+              Navigator.pop(context); // Close dialog
+              _handleLogout();
+            },
+            child: const Text("Logout", style: TextStyle(color: Colors.red)),
+          ),
+        ],
+      ),
+    );
   }
 
   Future<void> _handleSave() async {
     setState(() => _isUpdating = true);
 
-    // Create model from current controller text
     final updatedUser = UserModel(
       title: _controllers['title']!.text,
       name: _controllers['name']!.text,
@@ -136,84 +144,74 @@ class _ProfileViewState extends State<ProfileView> {
       cell: _controllers['cell']!.text,
     );
 
-    // In a real app, get your token from a Provider or Secure Storage
-    final result = await _updateProfileApi(updatedUser, "YOUR_SESSION_TOKEN");
+    final result = await _updateProfileApi(updatedUser, "YOUR_TOKEN_HERE");
 
     if (mounted) {
       setState(() => _isUpdating = false);
+
       if (result['success']) {
-        // Update local UI data
         setState(() {
-          userData['name'] = updatedUser.name;
-          userData['title'] = updatedUser.title;
-          userData['cell'] = updatedUser.cell;
+          userData.addAll(
+              updatedUser.toJson().map((k, v) => MapEntry(k, v.toString())));
         });
         Navigator.pop(context);
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-              content: Text("Profile updated successfully!"),
-              backgroundColor: Colors.green),
+          const SnackBar(content: Text("Profile updated successfully!")),
         );
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-              content: Text(result['message']),
-              backgroundColor: Colors.redAccent),
+          SnackBar(content: Text(result['message'] ?? "Update failed")),
         );
       }
     }
   }
 
-  Future<void> _pickProfilePicture() async {
-    FilePickerResult? result = await FilePicker.platform.pickFiles(
-      type: FileType.image,
-      allowMultiple: false,
-    );
+  Future<Map<String, dynamic>> _updateProfileApi(
+      UserModel user, String token) async {
+    try {
+      var request = http.MultipartRequest(
+          'POST', Uri.parse('https://your-api-url.com/profile/update'));
+      request.headers.addAll(
+          {'Accept': 'application/json', 'Authorization': 'Bearer $token'});
+      request.fields.addAll(
+          user.toJson().map((key, value) => MapEntry(key, value.toString())));
 
-    if (result != null && result.files.single.path != null) {
-      setState(() {
-        _imageFile = File(result.files.single.path!);
-      });
+      if (_imageFile != null) {
+        request.files
+            .add(await http.MultipartFile.fromPath('image', _imageFile!.path));
+      }
+
+      final streamedResponse = await request.send();
+      final response = await http.Response.fromStream(streamedResponse);
+      return response.statusCode == 200
+          ? {'success': true, 'data': jsonDecode(response.body)}
+          : {
+              'success': false,
+              'message': 'Server error: ${response.statusCode}'
+            };
+    } catch (e) {
+      return {'success': false, 'message': "Connection failed: $e"};
     }
   }
 
-  void _showLogoutConfirmation() {
-    showDialog(
-      context: context,
-      builder: (context) => BackdropFilter(
-        filter: ImageFilter.blur(sigmaX: 5, sigmaY: 5),
-        child: AlertDialog(
-          shape:
-              RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-          title: const Row(
-            children: [
-              Icon(LucideIcons.log_out, color: Colors.redAccent),
-              SizedBox(width: 12),
-              Text("Sign Out", style: TextStyle(fontWeight: FontWeight.bold)),
-            ],
-          ),
-          content: const Text(
-              "You will be signed out of your secure session. Continue?"),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: const Text("Cancel", style: TextStyle(color: Colors.grey)),
-            ),
-            ElevatedButton(
-              onPressed: () => Navigator.pop(context),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.redAccent,
-                shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12)),
-              ),
-              child:
-                  const Text("Sign Out", style: TextStyle(color: Colors.white)),
-            ),
-          ],
-        ),
-      ),
-    );
+  Future<void> _pickProfilePicture() async {
+    FilePickerResult? result =
+        await FilePicker.platform.pickFiles(type: FileType.image);
+
+    if (result != null && result.files.single.path != null) {
+      File pickedFile = File(result.files.single.path!);
+      final directory = await getApplicationDocumentsDirectory();
+      final String fileName =
+          'profile_pic_${DateTime.now().millisecondsSinceEpoch}.png';
+      final File savedFile =
+          await pickedFile.copy('${directory.path}/$fileName');
+
+      setState(() => _imageFile = savedFile);
+      await _saveImagePermanently(savedFile.path);
+    }
   }
+
+  // --- UI BUILDERS ---
 
   @override
   Widget build(BuildContext context) {
@@ -248,7 +246,7 @@ class _ProfileViewState extends State<ProfileView> {
                       onTap: () {},
                     ),
                   ]),
-                  const SizedBox(height: 24),
+                  const SizedBox(height: 32),
                   _buildSectionTitle("Preferences"),
                   _buildSettingsCard([
                     _buildSwitchTile(
@@ -266,8 +264,8 @@ class _ProfileViewState extends State<ProfileView> {
                     ),
                   ]),
                   const SizedBox(height: 40),
-                  _buildLogoutButton(),
-                  const SizedBox(height: 50),
+                  _buildLogoutButton(), // Referenced here
+                  const SizedBox(height: 60),
                 ],
               ),
             ),
@@ -279,7 +277,7 @@ class _ProfileViewState extends State<ProfileView> {
 
   Widget _buildElegantHeader() {
     return SliverAppBar(
-      expandedHeight: 320,
+      expandedHeight: 340,
       pinned: true,
       stretch: true,
       elevation: 0,
@@ -292,8 +290,8 @@ class _ProfileViewState extends State<ProfileView> {
             Container(
               decoration: const BoxDecoration(
                 gradient: LinearGradient(
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
                   colors: [
                     Color(0xFF0A192F),
                     Color(0xFF0D47A1),
@@ -305,15 +303,19 @@ class _ProfileViewState extends State<ProfileView> {
             Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                const SizedBox(height: 60),
+                const SizedBox(height: 40),
                 _buildAvatarStack(),
                 const SizedBox(height: 16),
-                Text(
-                  "${userData['title']} ${userData['name']}",
-                  style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 26,
-                      fontWeight: FontWeight.w800),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 20),
+                  child: Text(
+                    "${userData['title']} ${userData['name']}",
+                    textAlign: TextAlign.center,
+                    style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 24,
+                        fontWeight: FontWeight.bold),
+                  ),
                 ),
                 const SizedBox(height: 8),
                 _buildMemberCodeChip(),
@@ -335,7 +337,7 @@ class _ProfileViewState extends State<ProfileView> {
                   color: Colors.orangeAccent.withOpacity(0.5), width: 2),
               shape: BoxShape.circle),
           child: CircleAvatar(
-            radius: 55,
+            radius: 65,
             backgroundColor: const Color(0xFF1E293B),
             backgroundImage: _imageFile != null
                 ? FileImage(_imageFile!) as ImageProvider
@@ -343,18 +345,18 @@ class _ProfileViewState extends State<ProfileView> {
           ),
         ),
         Positioned(
-          bottom: 2,
-          right: 2,
+          bottom: 0,
+          right: 0,
           child: Material(
             color: Colors.orangeAccent,
             shape: const CircleBorder(),
-            elevation: 6,
+            elevation: 4,
             child: InkWell(
               onTap: _pickProfilePicture,
               borderRadius: BorderRadius.circular(50),
               child: const Padding(
                 padding: EdgeInsets.all(10.0),
-                child: Icon(LucideIcons.camera, color: Colors.white, size: 18),
+                child: Icon(LucideIcons.camera, color: Colors.white, size: 20),
               ),
             ),
           ),
@@ -363,28 +365,68 @@ class _ProfileViewState extends State<ProfileView> {
     );
   }
 
+  Widget _buildSectionTitle(String title) {
+    return Padding(
+      padding: const EdgeInsets.only(left: 4, bottom: 12),
+      child: Text(title.toUpperCase(),
+          style: const TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.bold,
+              color: Color(0xFF64748B),
+              letterSpacing: 1.2)),
+    );
+  }
+
+  Widget _buildSwitchTile(
+      {required IconData icon,
+      required String title,
+      required bool value,
+      required Function(bool) onChanged}) {
+    return ListTile(
+      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+      leading: Icon(icon, color: const Color(0xFF0A192F), size: 22),
+      title: Text(title,
+          style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 15)),
+      trailing: Switch.adaptive(
+          value: value, activeColor: Colors.orangeAccent, onChanged: onChanged),
+    );
+  }
+
+  Widget _buildLogoutButton() {
+    return SizedBox(
+      width: double.infinity,
+      child: TextButton.icon(
+        onPressed: _showLogoutConfirmation,
+        style: TextButton.styleFrom(
+          padding: const EdgeInsets.symmetric(vertical: 16),
+          foregroundColor: Colors.redAccent,
+          backgroundColor: Colors.redAccent.withOpacity(0.08),
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        ),
+        icon: const Icon(LucideIcons.log_out, size: 18),
+        label: const Text("Log Out Account",
+            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
+      ),
+    );
+  }
+
   void _showEditProfileModal(BuildContext context) {
     showGeneralDialog(
       context: context,
       barrierDismissible: !_isUpdating,
-      barrierLabel: "Dismiss",
       pageBuilder: (context, anim1, anim2) => Center(
-        child: StatefulBuilder(// Important: updates modal state while loading
-            builder: (context, setModalState) {
+        child: StatefulBuilder(builder: (context, setModalState) {
           return Container(
-            width: 500,
-            margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 40),
+            width: double.infinity,
+            constraints: const BoxConstraints(maxWidth: 500),
+            margin: const EdgeInsets.all(20),
             decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(32),
-              boxShadow: [
-                BoxShadow(color: Colors.black.withOpacity(0.2), blurRadius: 40)
-              ],
-            ),
+                color: Colors.white, borderRadius: BorderRadius.circular(24)),
             child: Material(
-              borderRadius: BorderRadius.circular(32),
+              borderRadius: BorderRadius.circular(24),
               child: Padding(
-                padding: const EdgeInsets.all(32),
+                padding: const EdgeInsets.all(24),
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
@@ -393,42 +435,26 @@ class _ProfileViewState extends State<ProfileView> {
                       children: [
                         const Text("Edit Profile",
                             style: TextStyle(
-                                fontSize: 22,
-                                fontWeight: FontWeight.w900,
-                                color: Color(0xFF0A192F))),
-                        if (!_isUpdating)
-                          IconButton(
-                              onPressed: () => Navigator.pop(context),
-                              icon: const Icon(LucideIcons.x, size: 20))
+                                fontSize: 20, fontWeight: FontWeight.bold)),
+                        IconButton(
+                            onPressed: () => Navigator.pop(context),
+                            icon: const Icon(LucideIcons.x, size: 24))
                       ],
                     ),
-                    const SizedBox(height: 24),
+                    const SizedBox(height: 20),
                     Flexible(
                       child: SingleChildScrollView(
                         child: Column(
                           children: [
-                            Row(
-                              children: [
-                                Expanded(
-                                    flex: 2,
-                                    child: _buildModernField(
-                                        "Title",
-                                        _controllers['title']!,
-                                        LucideIcons.contact)),
-                                const SizedBox(width: 12),
-                                Expanded(
-                                    flex: 5,
-                                    child: _buildModernField(
-                                        "Full Name",
-                                        _controllers['name']!,
-                                        LucideIcons.user)),
-                              ],
-                            ),
+                            _buildModernField("Title", _controllers['title']!,
+                                LucideIcons.contact),
+                            _buildModernField("Full Name",
+                                _controllers['name']!, LucideIcons.user),
                             _buildModernField("Email Address",
                                 _controllers['email']!, LucideIcons.mail),
                             _buildModernField("Mobile Phone",
                                 _controllers['phone']!, LucideIcons.phone),
-                            const Divider(),
+                            const Divider(height: 32),
                             _buildModernField("Church Group",
                                 _controllers['group']!, LucideIcons.users),
                             _buildModernField("Church Name",
@@ -444,14 +470,14 @@ class _ProfileViewState extends State<ProfileView> {
                       onPressed: _isUpdating
                           ? null
                           : () async {
-                              setModalState(() {}); // Start local spinner
+                              setModalState(() {});
                               await _handleSave();
                             },
                       style: ElevatedButton.styleFrom(
                         backgroundColor: const Color(0xFF0A192F),
-                        minimumSize: const Size(double.infinity, 60),
+                        minimumSize: const Size(double.infinity, 54),
                         shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(16)),
+                            borderRadius: BorderRadius.circular(12)),
                       ),
                       child: _isUpdating
                           ? const SizedBox(
@@ -462,6 +488,7 @@ class _ProfileViewState extends State<ProfileView> {
                           : const Text("Save Changes",
                               style: TextStyle(
                                   color: Colors.white,
+                                  fontSize: 16,
                                   fontWeight: FontWeight.bold)),
                     ),
                   ],
@@ -480,21 +507,18 @@ class _ProfileViewState extends State<ProfileView> {
       padding: const EdgeInsets.only(bottom: 16),
       child: TextFormField(
         controller: controller,
-        style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14),
+        style: const TextStyle(fontSize: 15),
         decoration: InputDecoration(
           labelText: label,
-          labelStyle: const TextStyle(
-              color: Color(0xFF94A3B8), fontWeight: FontWeight.normal),
+          labelStyle: TextStyle(color: Colors.grey.shade600, fontSize: 13),
           prefixIcon: Icon(icon, size: 18, color: const Color(0xFF0A192F)),
           filled: true,
           fillColor: const Color(0xFFF1F5F9),
+          contentPadding:
+              const EdgeInsets.symmetric(vertical: 14, horizontal: 16),
           border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(14),
+              borderRadius: BorderRadius.circular(12),
               borderSide: BorderSide.none),
-          focusedBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(14),
-              borderSide:
-                  const BorderSide(color: Colors.orangeAccent, width: 2)),
         ),
       ),
     );
@@ -502,125 +526,52 @@ class _ProfileViewState extends State<ProfileView> {
 
   Widget _buildMemberCodeChip() {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       decoration: BoxDecoration(
-          color: Colors.black26, borderRadius: BorderRadius.circular(30)),
+          color: Colors.black38, borderRadius: BorderRadius.circular(20)),
       child: Text(userData['code']!,
           style: const TextStyle(
               color: Colors.orangeAccent,
-              fontSize: 11,
-              fontWeight: FontWeight.w900,
-              letterSpacing: 1.5)),
+              fontSize: 13,
+              fontWeight: FontWeight.bold,
+              letterSpacing: 1.1)),
     );
   }
 
   Widget _buildQRCodeSection() {
     return Container(
-      padding: const EdgeInsets.all(24),
+      padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
           color: Colors.white,
-          borderRadius: BorderRadius.circular(28),
+          borderRadius: BorderRadius.circular(20),
           boxShadow: [
-            BoxShadow(
-                color: const Color(0xFF0A192F).withOpacity(0.06),
-                blurRadius: 30,
-                offset: const Offset(0, 10))
+            BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 10)
           ]),
       child: Row(
         children: [
           const Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text("Membership Token",
-                    style: TextStyle(
-                        fontWeight: FontWeight.w900,
-                        fontSize: 18,
-                        color: Color(0xFF0F172A))),
-                SizedBox(height: 4),
-                Text("Scan this QR code at church events for attendance.",
-                    style: TextStyle(
-                        color: Color(0xFF64748B), fontSize: 13, height: 1.4)),
-              ],
-            ),
-          ),
-          const SizedBox(width: 16),
-          QrImageView(
-            data: userData['code']!,
-            version: QrVersions.auto,
-            size: 70.0,
-            eyeStyle: const QrEyeStyle(
-                eyeShape: QrEyeShape.circle, color: Color(0xFF0A192F)),
-            dataModuleStyle: const QrDataModuleStyle(
-                dataModuleShape: QrDataModuleShape.circle,
-                color: Color(0xFF0A192F)),
-          ),
+              child: Text("Membership Token",
+                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15))),
+          QrImageView(data: userData['code']!, size: 60.0),
         ],
       ),
     );
   }
 
-  Widget _buildSectionTitle(String title) {
-    return Padding(
-      padding: const EdgeInsets.only(left: 4, bottom: 12),
-      child: Text(title.toUpperCase(),
-          style: const TextStyle(
-              fontSize: 11,
-              fontWeight: FontWeight.w900,
-              color: Color(0xFF94A3B8),
-              letterSpacing: 1.5)),
-    );
-  }
-
   Widget _buildSettingsCard(List<Widget> children) {
     return Container(
-      clipBehavior: Clip.antiAlias,
       decoration: BoxDecoration(
           color: Colors.white,
-          borderRadius: BorderRadius.circular(24),
+          borderRadius: BorderRadius.circular(20),
           border: Border.all(color: const Color(0xFFF1F5F9))),
       child: Column(children: children),
-    );
-  }
-
-  Widget _buildSwitchTile(
-      {required IconData icon,
-      required String title,
-      required bool value,
-      required Function(bool) onChanged}) {
-    return ListTile(
-      leading: Icon(icon, color: const Color(0xFF0A192F)),
-      title: Text(title,
-          style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 15)),
-      trailing: Switch.adaptive(
-          value: value, activeColor: Colors.orangeAccent, onChanged: onChanged),
-    );
-  }
-
-  Widget _buildLogoutButton() {
-    return SizedBox(
-      width: double.infinity,
-      child: TextButton.icon(
-        onPressed: _showLogoutConfirmation,
-        style: TextButton.styleFrom(
-          padding: const EdgeInsets.symmetric(vertical: 20),
-          foregroundColor: Colors.redAccent,
-          backgroundColor: Colors.redAccent.withOpacity(0.08),
-          shape:
-              RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        ),
-        icon: const Icon(LucideIcons.log_out, size: 20),
-        label: const Text("Log Out Account",
-            style: TextStyle(fontWeight: FontWeight.w900)),
-      ),
     );
   }
 }
 
 class _SettingsTile extends StatelessWidget {
   final IconData icon;
-  final String title;
-  final String subtitle;
+  final String title, subtitle;
   final VoidCallback onTap;
   const _SettingsTile(
       {required this.icon,
@@ -632,23 +583,22 @@ class _SettingsTile extends StatelessWidget {
   Widget build(BuildContext context) {
     return ListTile(
       onTap: onTap,
-      contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
       leading: Container(
-        padding: const EdgeInsets.all(10),
+        padding: const EdgeInsets.all(8),
         decoration: BoxDecoration(
             color: const Color(0xFFF1F5F9),
-            borderRadius: BorderRadius.circular(14)),
+            borderRadius: BorderRadius.circular(10)),
         child: Icon(icon, color: const Color(0xFF0A192F), size: 20),
       ),
       title: Text(title,
           style: const TextStyle(
-              fontWeight: FontWeight.w800,
+              fontWeight: FontWeight.bold,
               fontSize: 15,
               color: Color(0xFF0A192F))),
       subtitle: Text(subtitle,
-          style: const TextStyle(fontSize: 12, color: Color(0xFF64748B))),
-      trailing: const Icon(LucideIcons.chevron_right,
-          size: 18, color: Color(0xFFCBD5E1)),
+          style: TextStyle(fontSize: 13, color: Colors.grey.shade600)),
+      trailing: const Icon(LucideIcons.chevron_right, size: 18),
     );
   }
 }

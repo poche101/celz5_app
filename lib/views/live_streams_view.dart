@@ -9,269 +9,279 @@ class LiveStreamsView extends StatefulWidget {
   State<LiveStreamsView> createState() => _LiveStreamsViewState();
 }
 
-class _LiveStreamsViewState extends State<LiveStreamsView> {
-  late YoutubePlayerController _controller;
+class _LiveStreamsViewState extends State<LiveStreamsView>
+    with SingleTickerProviderStateMixin {
+  late YoutubePlayerController _ytController;
+  late AnimationController _pulseController;
   final Color brandColor = const Color(0xFF6366F1);
+  final bool _isLoading = false; // Mock loading state for API readiness
 
   @override
   void initState() {
     super.initState();
-    _controller = YoutubePlayerController(
-      initialVideoId: 'uD9-jNKwSa0',
-      flags: const YoutubePlayerFlags(autoPlay: false, isLive: true),
+    _ytController = YoutubePlayerController(
+      initialVideoId: 'uD9-jNKwSa0', // Replace with dynamic ID from API
+      flags:
+          const YoutubePlayerFlags(autoPlay: false, isLive: true, mute: false),
     );
+
+    _pulseController = AnimationController(
+      vsync: this,
+      duration: const Duration(seconds: 2),
+    )..repeat(reverse: true);
   }
 
   @override
   void dispose() {
-    _controller.dispose();
+    _ytController.dispose();
+    _pulseController.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    final size = MediaQuery.of(context).size;
-    final bool isDesktop = size.width > 1100;
-
     return Scaffold(
-      resizeToAvoidBottomInset: true,
-      backgroundColor: const Color(0xFF0F172A),
-      body: Container(
-        decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [Color(0xFF1E293B), Color(0xFF0F172A)],
-          ),
-        ),
-        child: SafeArea(
-          child: Column(
-            children: [
-              _buildTopBar(),
-              Expanded(
-                child: Padding(
-                  padding:
-                      EdgeInsets.symmetric(horizontal: isDesktop ? 40 : 16),
-                  child:
-                      isDesktop ? _buildDesktopLayout() : _buildMobileLayout(),
+      backgroundColor: const Color(0xFFF8FAFC),
+      appBar: _buildAppBar(),
+      body: _isLoading
+          ? Center(child: CircularProgressIndicator(color: brandColor))
+          : Column(
+              children: [
+                Expanded(
+                  child: SingleChildScrollView(
+                    physics: const BouncingScrollPhysics(),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        _buildVideoPlayerSection(),
+                        _buildStreamInfo(),
+                        const Divider(
+                            height: 1, thickness: 1, color: Color(0xFFE2E8F0)),
+                        const ChatSection(),
+                      ],
+                    ),
+                  ),
                 ),
-              ),
-            ],
-          ),
+                const ChatInputSection(),
+              ],
+            ),
+    );
+  }
+
+  PreferredSizeWidget _buildAppBar() {
+    return AppBar(
+      backgroundColor: Colors.white,
+      elevation: 0,
+      leading: IconButton(
+        icon: const Icon(LucideIcons.chevron_left, color: Color(0xFF1E293B)),
+        onPressed: () => Navigator.pop(context),
+      ),
+      title: const Text(
+        "LIVE BROADCAST",
+        style: TextStyle(
+          color: Color(0xFF1E293B),
+          fontWeight: FontWeight.w800,
+          fontSize: 16,
+          letterSpacing: 1.2,
+        ),
+      ),
+      centerTitle: true,
+      actions: [
+        IconButton(
+          icon: const Icon(LucideIcons.share_2,
+              color: Color(0xFF1E293B), size: 20),
+          onPressed: () {},
+        ),
+      ],
+    );
+  }
+
+  Widget _buildVideoPlayerSection() {
+    return Container(
+      width: double.infinity,
+      decoration: BoxDecoration(
+        color: Colors.black,
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.1),
+            blurRadius: 20,
+            offset: const Offset(0, 10),
+          )
+        ],
+      ),
+      child: AspectRatio(
+        aspectRatio: 16 / 9,
+        child: YoutubePlayer(
+          controller: _ytController,
+          progressIndicatorColor: brandColor,
+          liveUIColor: Colors.red,
         ),
       ),
     );
   }
 
-  Widget _buildTopBar() {
+  Widget _buildStreamInfo() {
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+      padding: const EdgeInsets.all(20),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              _buildLiveBadge(),
+              const SizedBox(width: 12),
+              _buildViewerCounter("1,420"),
+              const Spacer(),
+              _buildSupportButton(),
+            ],
+          ),
+          const SizedBox(height: 16),
+          const Text(
+            "Sunday Special: The Power of Persistent Prayer",
+            style: TextStyle(
+              fontSize: 20,
+              fontWeight: FontWeight.w800,
+              color: Color(0xFF0F172A),
+              height: 1.3,
+            ),
+          ),
+          const SizedBox(height: 12),
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(2),
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  border:
+                      Border.all(color: brandColor.withOpacity(0.3), width: 2),
+                ),
+                child: const CircleAvatar(
+                  radius: 14,
+                  backgroundColor: Color(0xFFE2E8F0),
+                  child: Icon(LucideIcons.user,
+                      size: 16, color: Color(0xFF64748B)),
+                ),
+              ),
+              const SizedBox(width: 10),
+              const Text(
+                "Pastor Deola Phillips",
+                style: TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600,
+                  color: Color(0xFF64748B),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildLiveBadge() {
+    return ScaleTransition(
+      scale: Tween(begin: 0.95, end: 1.05).animate(_pulseController),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+        decoration: BoxDecoration(
+          color: Colors.red.shade600,
+          borderRadius: BorderRadius.circular(6),
+        ),
+        child: const Row(
+          children: [
+            Icon(Icons.circle, color: Colors.white, size: 8),
+            SizedBox(width: 6),
+            Text("LIVE",
+                style: TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.w900,
+                    fontSize: 11)),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildViewerCounter(String count) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+      decoration: BoxDecoration(
+        color: const Color(0xFFF1F5F9),
+        borderRadius: BorderRadius.circular(6),
+      ),
       child: Row(
         children: [
-          GestureDetector(
-            onTap: () => Navigator.maybePop(context),
-            child: Container(
-              padding: const EdgeInsets.all(8),
-              decoration: BoxDecoration(
-                color: Colors.white.withOpacity(0.05),
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: const Icon(LucideIcons.chevron_left,
-                  color: Colors.white, size: 20),
-            ),
-          ),
-          const SizedBox(width: 16),
-          const Expanded(
-            child: Text(
-              "LIVE BROADCAST",
-              style: TextStyle(
-                color: Colors.white,
-                fontWeight: FontWeight.w900,
-                letterSpacing: 1.5,
-                fontSize: 14,
-              ),
-            ),
-          ),
+          const Icon(LucideIcons.users, color: Color(0xFF64748B), size: 14),
+          const SizedBox(width: 6),
+          Text(count,
+              style: const TextStyle(
+                  color: Color(0xFF64748B),
+                  fontWeight: FontWeight.w700,
+                  fontSize: 12)),
         ],
       ),
     );
   }
 
-  Widget _buildDesktopLayout() {
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Expanded(
-          flex: 7,
-          child: SingleChildScrollView(
-            physics: const BouncingScrollPhysics(),
-            child: _buildPlayerSection(),
-          ),
-        ),
-        const SizedBox(width: 32),
-        const Expanded(flex: 3, child: ChatSection(isScrollable: true)),
-      ],
-    );
-  }
-
-  Widget _buildMobileLayout() {
-    // Added SingleChildScrollView so the whole page scrolls on mobile
-    return SingleChildScrollView(
-      physics: const BouncingScrollPhysics(),
-      child: Column(
-        children: [
-          _buildPlayerSection(),
-          const SizedBox(height: 24),
-          const ChatSection(
-              isScrollable: false), // Disable inner scroll to allow page scroll
-          const SizedBox(height: 24),
-        ],
+  Widget _buildSupportButton() {
+    return ElevatedButton.icon(
+      onPressed: () {},
+      icon: const Icon(LucideIcons.heart, size: 16),
+      label: const Text("SUPPORT"),
+      style: ElevatedButton.styleFrom(
+        backgroundColor: brandColor,
+        foregroundColor: Colors.white,
+        elevation: 0,
+        padding: const EdgeInsets.symmetric(horizontal: 16),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+        textStyle: const TextStyle(fontWeight: FontWeight.w800, fontSize: 12),
       ),
-    );
-  }
-
-  Widget _buildPlayerSection() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Container(
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(24),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withOpacity(0.5),
-                blurRadius: 40,
-                offset: const Offset(0, 20),
-              )
-            ],
-          ),
-          child: ClipRRect(
-            borderRadius: BorderRadius.circular(24),
-            child: AspectRatio(
-              aspectRatio: 16 / 9,
-              child: YoutubePlayer(
-                controller: _controller,
-                progressIndicatorColor: brandColor,
-              ),
-            ),
-          ),
-        ),
-        const SizedBox(height: 20),
-        Wrap(
-          spacing: 12,
-          runSpacing: 12,
-          crossAxisAlignment: WrapCrossAlignment.center,
-          children: [
-            const LiveBadge(),
-            const ViewerCount(count: "1,420"),
-            TextButton.icon(
-              onPressed: () {},
-              icon: Icon(LucideIcons.heart, size: 16, color: brandColor),
-              label: Text("Support",
-                  style: TextStyle(color: brandColor, fontSize: 13)),
-              style: TextButton.styleFrom(
-                backgroundColor: brandColor.withOpacity(0.1),
-                padding: const EdgeInsets.symmetric(horizontal: 12),
-                shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(10)),
-              ),
-            )
-          ],
-        ),
-        const SizedBox(height: 16),
-        const Text(
-          "Sunday Special: The Power of Persistent Prayer",
-          style: TextStyle(
-            color: Colors.white,
-            fontSize: 22,
-            fontWeight: FontWeight.w800,
-            letterSpacing: -0.5,
-          ),
-        ),
-        const SizedBox(height: 8),
-        Row(
-          children: [
-            const CircleAvatar(radius: 10, backgroundColor: Colors.blueGrey),
-            const SizedBox(width: 10),
-            Expanded(
-              child: Text(
-                "With Pastor Deola Phillips",
-                style: TextStyle(
-                  color: const Color(0xFF94A3B8).withOpacity(0.8),
-                  fontSize: 14,
-                  fontWeight: FontWeight.w500,
-                ),
-              ),
-            ),
-          ],
-        ),
-      ],
     );
   }
 }
 
-// --- SUPPORTING COMPONENTS ---
-
 class ChatSection extends StatelessWidget {
-  final bool isScrollable;
-  const ChatSection({super.key, this.isScrollable = true});
+  const ChatSection({super.key});
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      decoration: BoxDecoration(
-        color: const Color(0xFF1E293B).withOpacity(0.4),
-        borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: Colors.white.withOpacity(0.05)),
-      ),
+      padding: const EdgeInsets.all(20),
       child: Column(
-        mainAxisSize: MainAxisSize.min, // Important for the scroll view
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _buildHeader(),
-          ListView.builder(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            itemCount: 15,
-            shrinkWrap: true, // Necessary when inside a SingleChildScrollView
-            physics: isScrollable
-                ? const BouncingScrollPhysics()
-                : const NeverScrollableScrollPhysics(),
-            itemBuilder: (context, i) => _buildChatItem(i),
+          const Row(
+            children: [
+              Icon(LucideIcons.message_square,
+                  size: 18, color: Color(0xFF1E293B)),
+              SizedBox(width: 8),
+              Text("Live Community",
+                  style: TextStyle(
+                      fontWeight: FontWeight.w800,
+                      fontSize: 16,
+                      color: Color(0xFF1E293B))),
+            ],
           ),
-          const ChatInputSection(),
+          const SizedBox(height: 20),
+          ListView.builder(
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            itemCount: 8, // Connect to API Stream
+            itemBuilder: (context, index) => _buildChatBubble(index),
+          ),
         ],
       ),
     );
   }
 
-  Widget _buildHeader() {
-    return Padding(
-      padding: const EdgeInsets.all(16),
-      child: Row(
-        children: [
-          const Icon(LucideIcons.message_circle, color: Colors.white, size: 18),
-          const SizedBox(width: 8),
-          const Text("Live Chat",
-              style:
-                  TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
-          const Spacer(),
-          const CircleAvatar(radius: 3, backgroundColor: Colors.green),
-          const SizedBox(width: 6),
-          Text("1.2k",
-              style: TextStyle(
-                  color: Colors.white.withOpacity(0.5), fontSize: 12)),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildChatItem(int i) {
+  Widget _buildChatBubble(int i) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 16),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           CircleAvatar(
-            radius: 14,
+            radius: 16,
             backgroundImage: NetworkImage("https://i.pravatar.cc/150?u=$i"),
           ),
           const SizedBox(width: 12),
@@ -279,14 +289,30 @@ class ChatSection extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text("User_$i",
+                Text("Faith Member $i",
+                    style: const TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w700,
+                        color: Color(0xFF64748B))),
+                const SizedBox(height: 4),
+                Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: const BorderRadius.only(
+                      topRight: Radius.circular(16),
+                      bottomLeft: Radius.circular(16),
+                      bottomRight: Radius.circular(16),
+                    ),
+                    border: Border.all(color: const Color(0xFFF1F5F9)),
+                  ),
+                  child: const Text(
+                    "God is indeed faithful! Receiving this word from Lagos. 🙏✨",
                     style: TextStyle(
-                        color: Colors.white.withOpacity(0.4),
-                        fontSize: 11,
-                        fontWeight: FontWeight.bold)),
-                const SizedBox(height: 2),
-                const Text("Amen! This is such a blessing. 🙏🔥",
-                    style: TextStyle(color: Colors.white, fontSize: 13)),
+                        fontSize: 14, color: Color(0xFF334155), height: 1.4),
+                  ),
+                ),
               ],
             ),
           ),
@@ -304,97 +330,86 @@ class ChatInputSection extends StatefulWidget {
 }
 
 class _ChatInputSectionState extends State<ChatInputSection> {
-  final TextEditingController _controller = TextEditingController();
-  final List<String> _emojis = ["🙏", "🙌", "🔥", "❤️", "✨", "👏", "🎯", "👑"];
+  final TextEditingController _messageController = TextEditingController();
+  final List<String> _quickEmojis = ["🙏", "🔥", "🙌", "❤️", "✨", "👏"];
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(vertical: 12),
-      decoration: const BoxDecoration(
-        color: Color(0xFF0F172A),
-        borderRadius: BorderRadius.vertical(bottom: Radius.circular(24)),
+      padding: EdgeInsets.only(
+          bottom: MediaQuery.of(context).padding.bottom + 10, top: 10),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        boxShadow: [
+          BoxShadow(
+              color: Colors.black.withOpacity(0.05),
+              blurRadius: 10,
+              offset: const Offset(0, -5))
+        ],
       ),
       child: Column(
-        mainAxisSize: MainAxisSize.min,
         children: [
           SizedBox(
-            height: 32,
+            height: 40,
             child: ListView.builder(
               scrollDirection: Axis.horizontal,
-              padding: const EdgeInsets.symmetric(horizontal: 12),
-              itemCount: _emojis.length,
-              itemBuilder: (context, index) => GestureDetector(
-                onTap: () => _controller.text += _emojis[index],
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 8),
-                  child: Text(_emojis[index],
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              itemCount: _quickEmojis.length,
+              itemBuilder: (context, i) => GestureDetector(
+                onTap: () => _messageController.text += _quickEmojis[i],
+                child: Container(
+                  margin: const EdgeInsets.only(right: 12),
+                  padding: const EdgeInsets.symmetric(horizontal: 12),
+                  decoration: BoxDecoration(
+                      color: const Color(0xFFF8FAFC),
+                      borderRadius: BorderRadius.circular(20)),
+                  alignment: Alignment.center,
+                  child: Text(_quickEmojis[i],
                       style: const TextStyle(fontSize: 18)),
                 ),
               ),
             ),
           ),
-          const SizedBox(height: 8),
           Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 12),
-            child: TextField(
-              controller: _controller,
-              style: const TextStyle(color: Colors.white, fontSize: 14),
-              decoration: InputDecoration(
-                hintText: "Say something...",
-                hintStyle: TextStyle(color: Colors.white.withOpacity(0.2)),
-                filled: true,
-                fillColor: Colors.white.withOpacity(0.05),
-                contentPadding:
-                    const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                    borderSide: BorderSide.none),
-                suffixIcon: IconButton(
-                  icon: const Icon(LucideIcons.send,
-                      color: Color(0xFF6366F1), size: 18),
-                  onPressed: () => _controller.clear(),
+            padding: const EdgeInsets.all(16),
+            child: Row(
+              children: [
+                Expanded(
+                  child: TextField(
+                    controller: _messageController,
+                    decoration: InputDecoration(
+                      hintText: "Join the conversation...",
+                      hintStyle: const TextStyle(
+                          color: Color(0xFF94A3B8), fontSize: 14),
+                      filled: true,
+                      fillColor: const Color(0xFFF1F5F9),
+                      contentPadding: const EdgeInsets.symmetric(
+                          horizontal: 20, vertical: 12),
+                      border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(30),
+                          borderSide: BorderSide.none),
+                    ),
+                  ),
                 ),
-              ),
+                const SizedBox(width: 12),
+                GestureDetector(
+                  onTap: () {
+                    // API Call: sendMessage(_messageController.text);
+                    _messageController.clear();
+                  },
+                  child: Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: const BoxDecoration(
+                        color: Color(0xFF6366F1), shape: BoxShape.circle),
+                    child: const Icon(LucideIcons.send,
+                        color: Colors.white, size: 20),
+                  ),
+                ),
+              ],
             ),
           ),
         ],
       ),
-    );
-  }
-}
-
-class LiveBadge extends StatelessWidget {
-  const LiveBadge({super.key});
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-      decoration: BoxDecoration(
-          color: Colors.red, borderRadius: BorderRadius.circular(6)),
-      child: const Text("LIVE",
-          style: TextStyle(
-              color: Colors.white, fontWeight: FontWeight.bold, fontSize: 10)),
-    );
-  }
-}
-
-class ViewerCount extends StatelessWidget {
-  final String count;
-  const ViewerCount({super.key, required this.count});
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Icon(LucideIcons.users, color: Colors.white.withOpacity(0.5), size: 14),
-        const SizedBox(width: 4),
-        Text(count,
-            style: TextStyle(
-                color: Colors.white.withOpacity(0.5),
-                fontSize: 12,
-                fontWeight: FontWeight.bold)),
-      ],
     );
   }
 }
