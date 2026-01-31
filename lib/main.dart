@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:flutter_web_plugins/url_strategy.dart'; // REQUIRED for clean URLs
+import 'package:flutter_web_plugins/url_strategy.dart';
 
 // SHARED WIDGETS
 import 'package:celz5_app/views/shared/church_webview.dart';
@@ -20,12 +20,13 @@ import 'package:celz5_app/views/register_view.dart';
 import 'package:celz5_app/views/profile_view.dart';
 import 'package:celz5_app/views/event_register_view.dart';
 
-// ADMIN IMPORT
+// ADMIN & COMPONENT IMPORTS
 import 'package:celz5_app/views/admin/admin_dashboard.dart';
+// ADDED: Import for the blog post tab component
+import 'package:celz5_app/views/admin/tabs/blog_posts_tab.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
-  // Call this BEFORE runApp to enable clean URLs like localhost:8080/admin
   usePathUrlStrategy();
   runApp(const Celz5App());
 }
@@ -40,18 +41,23 @@ class Celz5App extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
         useMaterial3: true,
-        colorScheme: ColorScheme.fromSeed(seedColor: const Color(0xFF0A192F)),
+        colorScheme: ColorScheme.fromSeed(
+          seedColor: const Color(0xFF6366F1),
+          primary: const Color(0xFF6366F1),
+        ),
         textTheme: GoogleFonts.interTextTheme(ThemeData.light().textTheme),
         scaffoldBackgroundColor: const Color(0xFFF8FAFC),
       ),
-      // Setting initialRoute to '/' makes the AdminDashboard the first thing seen.
       initialRoute: '/',
       routes: {
-        // Root path now loads AdminDashboard
+        // Admin Routes
         '/': (context) => const AdminDashboard(),
         '/admin': (context) => const AdminDashboard(),
 
-        // Mobile/Member routes
+        // ADDED: Route to access the Blog Studio directly
+        '/blog-post': (context) => const BlogPostTab(),
+
+        // User/Member Routes
         '/dashboard': (context) => const DashboardShell(),
         '/home': (context) => const HomeView(),
         '/about': (context) => const AboutView(),
@@ -84,18 +90,18 @@ class _DashboardShellState extends State<DashboardShell> {
   int _currentIndex = 0;
 
   final List<Widget> _pages = [
-    const HomeView(), // Index 0
-    const AboutView(), // Index 1
-    const TestimonyView(), // Index 2
-    const EventView(), // Index 3
-    const BlogView(), // Index 4
-    const HigherLifeArchiveApp(), // Index 5
+    const HomeView(),
+    const AboutView(),
+    const TestimonyView(),
+    const EventView(),
+    const BlogView(),
+    const HigherLifeArchiveApp(),
     const ChurchWebView(
       url: "https://kingsch.at",
       title: "Contact Us / KingsChat",
-    ), // Index 6
-    const LiveStreamsView(), // Index 7
-    const ProfileView(), // Index 8
+    ),
+    const LiveStreamsView(),
+    const ProfileView(),
   ];
 
   @override

@@ -1,5 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
+// Import your new page files here once created:
+import 'package:celz5_app/views/admin/tabs/blog_posts_tab.dart';
+import 'package:celz5_app/views/admin/tabs/testimonies_tab.dart';
+import 'package:celz5_app/views/admin/tabs/events_tab.dart';
+import 'package:celz5_app/views/admin/tabs/videos_tab.dart';
+import 'package:celz5_app/views/admin/tabs/live_stream_tab.dart';
+import 'package:celz5_app/views/admin/tabs/members_tab.dart';
 
 class AdminDashboard extends StatefulWidget {
   const AdminDashboard({super.key});
@@ -11,16 +18,38 @@ class AdminDashboard extends StatefulWidget {
 class _AdminDashboardState extends State<AdminDashboard> {
   int _selectedIndex = 0;
 
-  // Form Controllers for the "Create Meeting" logic
   final _meetingTitleController = TextEditingController();
   final _streamLinkController = TextEditingController();
 
   @override
   void dispose() {
-    // Clean up controllers when the widget is destroyed
     _meetingTitleController.dispose();
     _streamLinkController.dispose();
     super.dispose();
+  }
+
+  // --- PAGE SWITCHER LOGIC ---
+// --- PAGE SWITCHER LOGIC ---
+  Widget _getSelectedPage() {
+    switch (_selectedIndex) {
+      case 0:
+        return _buildDashboardContent(); // Dashboard Stats (Key 0 inside)
+      case 1:
+        // Swapping the Text for your actual Blog Dashboard
+        return const BlogPostTab(key: ValueKey(1));
+      case 2:
+        return const TestimoniesTab(key: ValueKey(2));
+      case 3:
+        return const EventTab(key: ValueKey(3));
+      case 4:
+        return const VideoTab(key: ValueKey(4));
+      case 5:
+        return const LiveStreamTab(key: ValueKey(5));
+      case 6:
+        return const MemberTab(key: ValueKey(6));
+      default:
+        return _buildDashboardContent();
+    }
   }
 
   void _showCreateMeetingDialog() {
@@ -36,56 +65,27 @@ class _AdminDashboardState extends State<AdminDashboard> {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              _buildDialogField(
-                "Meeting Title",
-                "e.g. Sunday Service",
-                LucideIcons.heading,
-                _meetingTitleController, // Pass controller
-              ),
+              _buildDialogField("Meeting Title", "e.g. Sunday Service",
+                  LucideIcons.heading, _meetingTitleController),
               const SizedBox(height: 16),
-              _buildDialogField(
-                "Stream Link",
-                "https://youtube.com/live/...",
-                LucideIcons.link,
-                _streamLinkController, // Pass controller
-              ),
+              _buildDialogField("Stream Link", "https://youtube.com/live/...",
+                  LucideIcons.link, _streamLinkController),
             ],
           ),
         ),
         actions: [
           TextButton(
-            onPressed: () {
-              _meetingTitleController.clear();
-              _streamLinkController.clear();
-              Navigator.pop(context);
-            },
+            onPressed: () => Navigator.pop(context),
             child: const Text("Cancel"),
           ),
           ElevatedButton(
             style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFF0A192F),
-              foregroundColor: Colors.white,
-              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-              shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(8)),
-            ),
+                backgroundColor: const Color(0xFF0A192F),
+                foregroundColor: Colors.white),
             onPressed: () {
-              // --- Logic to handle the data ---
-              final String title = _meetingTitleController.text;
-              final String link = _streamLinkController.text;
-
-              if (title.isNotEmpty && link.isNotEmpty) {
-                // API CALL HERE: Save meeting
-                debugPrint("Saved: $title with link: $link");
-
-                _meetingTitleController.clear();
-                _streamLinkController.clear();
-                Navigator.pop(context);
-
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text("Meeting Created Successfully")),
-                );
-              }
+              Navigator.pop(context);
+              ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text("Meeting Created")));
             },
             child: const Text("Create Meeting"),
           ),
@@ -100,7 +100,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
       backgroundColor: const Color(0xFFF1F5F9),
       body: Row(
         children: [
-          // --- DESKTOP SIDEBAR ---
+          // --- SIDEBAR ---
           Container(
             width: 260,
             color: const Color(0xFF0A192F),
@@ -128,7 +128,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
             ),
           ),
 
-          // --- MAIN CONTENT AREA ---
+          // --- MAIN CONTENT ---
           Expanded(
             child: Column(
               children: [
@@ -136,7 +136,10 @@ class _AdminDashboardState extends State<AdminDashboard> {
                 Expanded(
                   child: SingleChildScrollView(
                     padding: const EdgeInsets.all(40),
-                    child: _buildDashboardContent(),
+                    child: AnimatedSwitcher(
+                      duration: const Duration(milliseconds: 300),
+                      child: _getSelectedPage(), // This swaps the content
+                    ),
                   ),
                 ),
               ],
@@ -152,7 +155,14 @@ class _AdminDashboardState extends State<AdminDashboard> {
       padding: const EdgeInsets.all(32),
       child: Row(
         children: [
-          const Icon(LucideIcons.church, color: Color(0xFFEAB308), size: 32),
+          // Logo from Assets
+          Image.asset(
+            'assets/images/logo.png',
+            height: 32,
+            width: 32,
+            errorBuilder: (context, error, stackTrace) =>
+                const Icon(LucideIcons.layout_template, color: Colors.amber),
+          ),
           const SizedBox(width: 12),
           const Text("ADMIN",
               style: TextStyle(
@@ -164,6 +174,8 @@ class _AdminDashboardState extends State<AdminDashboard> {
       ),
     );
   }
+
+  // ... (Keep your _sidebarItem, _buildDesktopHeader, _statCard, _actionTile, etc. from previous code)
 
   Widget _sidebarItem(int index, String label, IconData icon) {
     bool isSelected = _selectedIndex == index;
@@ -194,38 +206,9 @@ class _AdminDashboardState extends State<AdminDashboard> {
     );
   }
 
-  Widget _buildDesktopHeader() {
-    return Container(
-      height: 80,
-      color: Colors.white,
-      padding: const EdgeInsets.symmetric(horizontal: 40),
-      child: Row(
-        children: [
-          const Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text("Welcome back, Admin",
-                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-              Text("Global Ministry Dashboard",
-                  style: TextStyle(fontSize: 12, color: Colors.grey)),
-            ],
-          ),
-          const Spacer(),
-          _headerActionIcon(LucideIcons.search),
-          _headerActionIcon(LucideIcons.bell),
-          const VerticalDivider(indent: 25, endIndent: 25, width: 40),
-          const CircleAvatar(
-              radius: 18,
-              backgroundColor: Color(0xFF0A192F),
-              child: Icon(LucideIcons.user, size: 18, color: Colors.white)),
-        ],
-      ),
-    );
-  }
-
   Widget _buildDashboardContent() {
     return Column(
+      key: const ValueKey(0), // Key needed for AnimatedSwitcher
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Row(
@@ -250,6 +233,35 @@ class _AdminDashboardState extends State<AdminDashboard> {
           ],
         ),
       ],
+    );
+  }
+
+  // --- REUSE YOUR EXISTING HELPER WIDGETS BELOW ---
+  Widget _statCard(String label, String value, IconData icon, Color color) {
+    return Expanded(
+      child: Container(
+        padding: const EdgeInsets.all(24),
+        decoration: BoxDecoration(
+            color: Colors.white, borderRadius: BorderRadius.circular(16)),
+        child: Row(
+          children: [
+            CircleAvatar(
+                backgroundColor: color.withOpacity(0.1),
+                child: Icon(icon, color: color, size: 20)),
+            const SizedBox(width: 20),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(label,
+                    style: const TextStyle(color: Colors.grey, fontSize: 13)),
+                Text(value,
+                    style: const TextStyle(
+                        fontSize: 24, fontWeight: FontWeight.bold)),
+              ],
+            ),
+          ],
+        ),
+      ),
     );
   }
 
@@ -278,41 +290,6 @@ class _AdminDashboardState extends State<AdminDashboard> {
           ],
         ),
       ],
-    );
-  }
-
-  Widget _statCard(String label, String value, IconData icon, Color color) {
-    return Expanded(
-      child: Container(
-        padding: const EdgeInsets.all(24),
-        decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(16),
-            boxShadow: [
-              BoxShadow(
-                  color: Colors.black.withOpacity(0.02),
-                  blurRadius: 10,
-                  offset: const Offset(0, 4))
-            ]),
-        child: Row(
-          children: [
-            CircleAvatar(
-                backgroundColor: color.withOpacity(0.1),
-                child: Icon(icon, color: color, size: 20)),
-            const SizedBox(width: 20),
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(label,
-                    style: const TextStyle(color: Colors.grey, fontSize: 13)),
-                Text(value,
-                    style: const TextStyle(
-                        fontSize: 24, fontWeight: FontWeight.bold)),
-              ],
-            ),
-          ],
-        ),
-      ),
     );
   }
 
@@ -366,7 +343,36 @@ class _AdminDashboardState extends State<AdminDashboard> {
     );
   }
 
-  // Updated Helper to accept the controller
+  Widget _buildDesktopHeader() {
+    return Container(
+      height: 80,
+      color: Colors.white,
+      padding: const EdgeInsets.symmetric(horizontal: 40),
+      child: Row(
+        children: [
+          const Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text("Welcome back, Admin",
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+              Text("CE Lagos Zone 5 Dashboard",
+                  style: TextStyle(fontSize: 12, color: Colors.grey)),
+            ],
+          ),
+          const Spacer(),
+          _headerActionIcon(LucideIcons.search),
+          _headerActionIcon(LucideIcons.bell),
+          const VerticalDivider(indent: 25, endIndent: 25, width: 40),
+          const CircleAvatar(
+              radius: 18,
+              backgroundColor: Color(0xFF0A192F),
+              child: Icon(LucideIcons.user, size: 18, color: Colors.white)),
+        ],
+      ),
+    );
+  }
+
   Widget _buildDialogField(String label, String hint, IconData icon,
       TextEditingController controller) {
     return Column(
@@ -376,7 +382,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
             style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
         const SizedBox(height: 8),
         TextField(
-          controller: controller, // Linked controller here
+          controller: controller,
           decoration: InputDecoration(
             prefixIcon: Icon(icon, size: 18),
             hintText: hint,
@@ -387,12 +393,6 @@ class _AdminDashboardState extends State<AdminDashboard> {
             border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(10),
                 borderSide: BorderSide(color: Colors.grey.shade300)),
-            enabledBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(10),
-                borderSide: BorderSide(color: Colors.grey.shade200)),
-            focusedBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(10),
-                borderSide: const BorderSide(color: Color(0xFF0A192F))),
           ),
         ),
       ],
